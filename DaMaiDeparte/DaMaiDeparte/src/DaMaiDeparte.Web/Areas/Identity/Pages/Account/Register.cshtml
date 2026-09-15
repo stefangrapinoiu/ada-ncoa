@@ -1,0 +1,90 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Creează un cont";
+}
+
+<div class="card auth-card">
+    <div class="card-body p-4 p-md-5">
+        <h1 class="h3 mb-2">Creează un cont</h1>
+        <p class="text-muted mb-4">Alătură-te comunității și ajută produsele pe care nu le mai folosești să ajungă la cineva care are nevoie de ele.</p>
+
+        <form method="post" asp-route-returnUrl="@Model.ReturnUrl" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <fieldset class="mb-4">
+                <legend class="h6 mb-3">Cum dorești să folosești aplicația?</legend>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 account-type-option position-relative">
+                        <input class="form-check-input" type="radio" asp-for="Input.AccountType" id="accountTypeDonator"
+                               value="@AccountType.Donator" />
+                        <label for="accountTypeDonator">
+                            <span class="d-flex align-items-center gap-2 fw-semibold mb-1">
+                                <i class="bi bi-gift text-success fs-4" aria-hidden="true"></i> Vreau să donez produse
+                            </span>
+                            <span class="small text-muted d-block">Publică produse pe care nu le mai folosești și oferă-le gratuit altor persoane.</span>
+                        </label>
+                    </div>
+                    <div class="col-12 col-md-6 account-type-option position-relative">
+                        <input class="form-check-input" type="radio" asp-for="Input.AccountType" id="accountTypeReceiver"
+                               value="@AccountType.Receiver" />
+                        <label for="accountTypeReceiver">
+                            <span class="d-flex align-items-center gap-2 fw-semibold mb-1">
+                                <i class="bi bi-bag-heart text-success fs-4" aria-hidden="true"></i> Vreau să primesc produse
+                            </span>
+                            <span class="small text-muted d-block">Descoperă produse oferite gratuit și rezervă ceea ce îți este util.</span>
+                        </label>
+                    </div>
+                </div>
+                <span asp-validation-for="Input.AccountType" class="field-validation-error small d-block mt-2"></span>
+            </fieldset>
+
+            <div class="row g-3">
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Input.FirstName" class="form-label"></label>
+                    <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" />
+                    <span asp-validation-for="Input.FirstName" class="small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Input.LastName" class="form-label"></label>
+                    <input asp-for="Input.LastName" class="form-control" autocomplete="family-name" />
+                    <span asp-validation-for="Input.LastName" class="small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="nume@exemplu.ro" />
+                    <span asp-validation-for="Input.Email" class="small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                    <input asp-for="Input.PhoneNumber" class="form-control" autocomplete="tel" placeholder="Ex: 0722 123 456" />
+                    <div class="form-text">Va fi vizibil doar persoanei cu care stabilești o predare.</div>
+                    <span asp-validation-for="Input.PhoneNumber" class="small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Input.Password" class="form-label"></label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-describedby="passwordHelp" />
+                    <span asp-validation-for="Input.Password" class="small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                    <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="small"></span>
+                </div>
+                <div class="col-12">
+                    <div id="passwordHelp" class="form-text">Cel puțin 8 caractere, cu o literă mare, o literă mică și o cifră.</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-4">Creează cont</button>
+        </form>
+
+        <p class="text-center mt-4 mb-0">
+            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Ai deja un cont? Autentifică-te</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

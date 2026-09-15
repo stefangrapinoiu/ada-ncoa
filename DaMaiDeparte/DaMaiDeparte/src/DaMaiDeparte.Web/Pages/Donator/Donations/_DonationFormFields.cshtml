@@ -1,0 +1,62 @@
+@model DonationFormViewModel
+@{
+    var currentImage = Model.CurrentImagePath.ToImageUrl();
+}
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="mb-3">
+    <label asp-for="Input.Title" class="form-label"></label>
+    <input asp-for="Input.Title" class="form-control" placeholder="Ex: Scaun de birou" maxlength="100" />
+    <span asp-validation-for="Input.Title" class="small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Input.Description" class="form-label"></label>
+    <textarea asp-for="Input.Description" class="form-control" rows="5" maxlength="2000"
+              placeholder="Descrie produsul, starea lui și orice informații utile pentru beneficiar."></textarea>
+    <span asp-validation-for="Input.Description" class="small"></span>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+        <label asp-for="Input.CategoryId" class="form-label"></label>
+        <select asp-for="Input.CategoryId" asp-items="Model.Categories" class="form-select">
+            <option value="">Alege o categorie</option>
+        </select>
+        <span asp-validation-for="Input.CategoryId" class="small"></span>
+    </div>
+    <div class="col-12 col-md-6">
+        <label asp-for="Input.Condition" class="form-label"></label>
+        <select asp-for="Input.Condition" asp-items="Model.Conditions" class="form-select">
+            <option value="">Alege starea</option>
+        </select>
+        <span asp-validation-for="Input.Condition" class="small"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Input.PickupArea" class="form-label"></label>
+    <input asp-for="Input.PickupArea" class="form-control" placeholder="Ex: Cluj-Napoca, Mărăști" maxlength="100" />
+    <div class="form-text">Indică doar orașul și cartierul, nu adresa exactă.</div>
+    <span asp-validation-for="Input.PickupArea" class="small"></span>
+</div>
+
+<fieldset class="mb-4">
+    <legend class="form-label fs-6 mb-2">Imagine produs</legend>
+    @if (currentImage is not null)
+    {
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <img src="@currentImage" alt="@UiText.ImageAlt(Model.Input.Title)" class="donation-thumb" />
+            <div class="form-check">
+                <input asp-for="Input.RemoveImage" class="form-check-input" />
+                <label asp-for="Input.RemoveImage" class="form-check-label"></label>
+            </div>
+        </div>
+    }
+    <label for="imageInput" class="form-label small text-muted mb-1">@(currentImage is null ? "Alege o imagine" : "Schimbă imaginea")</label>
+    <input type="file" id="imageInput" name="Input.Image" class="form-control"
+           accept="image/jpeg,image/png,image/webp" aria-describedby="imageHelp" />
+    <div id="imageHelp" class="form-text">Adaugă o fotografie clară a produsului. Formate acceptate: JPG, PNG sau WebP (maximum 5 MB).</div>
+    <span asp-validation-for="Input.Image" class="small"></span>
+    <img id="imagePreview" class="donation-detail-img mt-3 d-none" alt="Previzualizare imagine produs" />
+</fieldset>

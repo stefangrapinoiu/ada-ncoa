@@ -1,0 +1,116 @@
+@page
+@model DaMaiDeparte.Web.Pages.Donations.IndexModel
+@{
+    ViewData["Title"] = "Produse disponibile";
+    var results = Model.Results;
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Produse disponibile</h1>
+    <p class="text-muted mb-0">Descoperă produse oferite gratuit de persoane din comunitate.</p>
+</div>
+
+<form method="get" class="card mb-4" role="search" aria-label="Caută produse">
+    <div class="card-body">
+        <input type="hidden" name="p" value="1" />
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-4">
+                <label for="q" class="form-label">Caută produse</label>
+                <input type="search" id="q" name="q" value="@Model.Search" class="form-control" placeholder="Caută după titlu sau descriere..." maxlength="100" />
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="categorie" class="form-label">Categorie</label>
+                <select id="categorie" name="categorie" class="form-select" data-autosubmit asp-items="Model.Categories">
+                    <option value="">Toate categoriile</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="stare" class="form-label">Stare produs</label>
+                <select id="stare" name="stare" class="form-select" data-autosubmit asp-items="Model.Conditions">
+                    <option value="">Toate stările</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="zona" class="form-label">Zonă</label>
+                <input type="text" id="zona" name="zona" value="@Model.Area" class="form-control" placeholder="Ex: Cluj-Napoca" maxlength="100" />
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="sort" class="form-label">Sortare</label>
+                <select id="sort" name="sort" class="form-select" data-autosubmit>
+                    @if (Model.Sort == DonationSort.Newest)
+                    {
+                        <option value="Newest" selected>Cele mai noi</option>
+                        <option value="Oldest">Cele mai vechi</option>
+                    }
+                    else
+                    {
+                        <option value="Newest">Cele mai noi</option>
+                        <option value="Oldest" selected>Cele mai vechi</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-success"><i class="bi bi-search" aria-hidden="true"></i> Caută</button>
+            @if (Model.HasFilters)
+            {
+                <a class="btn btn-outline-secondary" asp-page="/Donations/Index">Resetează filtrele</a>
+            }
+        </div>
+    </div>
+</form>
+
+@if (results.TotalCount == 0)
+{
+    if (Model.HasFilters)
+    {
+        <partial name="_EmptyState" model="EmptyStates.SearchNoResults" />
+        <p class="visually-hidden" role="status">Nu am găsit produse care să corespundă căutării tale. Încearcă să modifici filtrele.</p>
+    }
+    else
+    {
+        <partial name="_EmptyState" model="EmptyStates.NoDonationsYet" />
+    }
+}
+else
+{
+    <p class="text-muted" role="status">Rezultate: <strong>@results.TotalCount</strong></p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">
+        @foreach (var item in results.Items)
+        {
+            <div class="col"><partial name="_DonationCard" model="item" /></div>
+        }
+    </div>
+
+    if (results.TotalPages > 1)
+    {
+        <nav class="mt-4" aria-label="Paginare rezultate">
+            <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item @(results.HasPrevious ? "" : "disabled")">
+                    <a class="page-link" asp-page="/Donations/Index" asp-all-route-data="Model.RouteFor(results.Page - 1)">
+                        <span aria-hidden="true">&laquo;</span> Anterioara
+                    </a>
+                </li>
+                @for (var i = Math.Max(1, results.Page - 2); i <= Math.Min(results.TotalPages, results.Page + 2); i++)
+                {
+                    if (i == results.Page)
+                    {
+                        <li class="page-item active" aria-current="page"><span class="page-link">@i</span></li>
+                    }
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-page="/Donations/Index" asp-all-route-data="Model.RouteFor(i)" aria-label="Pagina @i">@i</a>
+                        </li>
+                    }
+                }
+                <li class="page-item @(results.HasNext ? "" : "disabled")">
+                    <a class="page-link" asp-page="/Donations/Index" asp-all-route-data="Model.RouteFor(results.Page + 1)">
+                        Următoarea <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

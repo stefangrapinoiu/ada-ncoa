@@ -1,0 +1,54 @@
+@page
+@model DaMaiDeparte.Web.Pages.Receiver.DashboardModel
+@{
+    ViewData["Title"] = "Rezervările mele";
+    var returnUrl = Url.Page("/Receiver/Dashboard");
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Rezervările mele</h1>
+        <p class="text-muted mb-0">Bine ai revenit, @Model.FirstName!</p>
+    </div>
+    <a class="btn btn-success" asp-page="/Donations/Index"><i class="bi bi-search" aria-hidden="true"></i> Descoperă produse</a>
+</div>
+
+<h2 class="h4 mb-3">Rezervări active</h2>
+
+@if (Model.Items.Count == 0)
+{
+    <partial name="_EmptyState" model="EmptyStates.ReceiverNoActiveReservations" />
+}
+else
+{
+    <ul class="list-unstyled d-grid gap-3">
+        @foreach (var item in Model.Items)
+        {
+            <li class="card">
+                <div class="card-body d-flex flex-column flex-md-row gap-3 align-items-md-center">
+                    <div class="d-flex gap-3 align-items-center flex-grow-1 min-w-0">
+                        <partial name="_DonationImage" model='new DonationImageModel(item.ImagePath, item.Title, "donation-thumb")' />
+                        <div class="min-w-0">
+                            <h3 class="h6 mb-1 text-truncate">@item.Title</h3>
+                            <dl class="small mb-0 row gx-2">
+                                <dt class="col-auto text-muted fw-normal">Donator:</dt><dd class="col-auto mb-0">@item.DonatorFirstName</dd>
+                                <dt class="col-auto text-muted fw-normal">Rezervat la:</dt><dd class="col-auto mb-0">@RoDate.FormatDateTime(item.ReservedAt)</dd>
+                            </dl>
+                            <dl class="small mb-0 row gx-2">
+                                <dt class="col-auto text-muted fw-normal">Locul predării:</dt><dd class="col-auto mb-0">@(item.MeetingLocation ?? "de stabilit")</dd>
+                                <dt class="col-auto text-muted fw-normal">Data predării:</dt><dd class="col-auto mb-0">@(item.MeetingAt.HasValue ? RoDate.FormatDateTime(item.MeetingAt) : "de stabilit")</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-sm btn-success" asp-page="/Receiver/Reservations/Details" asp-route-id="@item.ReservationId">Vezi detalii</a>
+                        <form method="post" asp-page="/Receiver/Reservations/Details" asp-page-handler="Cancel" asp-route-id="@item.ReservationId" asp-route-returnUrl="@returnUrl"
+                              data-confirm="@UiText.Confirm.CancelReservation" data-confirm-button="@UiText.Confirm.CancelReservationButton" data-cancel-button="@UiText.Confirm.Back">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Anulează rezervarea</button>
+                        </form>
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+}

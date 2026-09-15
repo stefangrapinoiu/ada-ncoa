@@ -1,0 +1,44 @@
+@page
+@model DaMaiDeparte.Web.Pages.Receiver.HistoryModel
+@{
+    ViewData["Title"] = "Produse primite";
+}
+
+<h1 class="h3 mb-1">Produse primite</h1>
+<p class="text-muted mb-4">Aici găsești produsele pe care le-ai primit prin @AppInfo.Name.</p>
+
+@if (Model.Items.Count == 0)
+{
+    <partial name="_EmptyState" model="EmptyStates.ReceiverNoReceived" />
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <caption class="visually-hidden">Produse primite</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Produs</th>
+                        <th scope="col">Categorie</th>
+                        <th scope="col">Donator</th>
+                        <th scope="col">Rezervat la</th>
+                        <th scope="col">Primit la</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><a asp-page="/Receiver/Reservations/Details" asp-route-id="@item.ReservationId">@item.Title</a></td>
+                            <td>@item.CategoryName</td>
+                            <td>@item.DonatorFirstName</td>
+                            <td class="text-nowrap">@RoDate.FormatDateTime(item.ReservedAt)</td>
+                            <td class="text-nowrap">@RoDate.FormatDateTime(item.CompletedAt)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
