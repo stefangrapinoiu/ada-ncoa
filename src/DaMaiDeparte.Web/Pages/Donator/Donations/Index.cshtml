@@ -1,0 +1,53 @@
+@page
+@model DaMaiDeparte.Web.Pages.Donator.Donations.IndexModel
+@{
+    ViewData["Title"] = "Produsele mele";
+    var tabs = new (DonationStatus? Status, string Label)[]
+    {
+        (null, "Active"),
+        (DonationStatus.Available, "Disponibile"),
+        (DonationStatus.Reserved, "Rezervate"),
+        (DonationStatus.Completed, "Finalizate"),
+        (DonationStatus.Cancelled, "Anulate")
+    };
+    var returnUrl = Url.Page("/Donator/Donations/Index", new { status = Model.Status?.ToString() });
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Produsele mele</h1>
+    <a class="btn btn-success" asp-page="./Create"><i class="bi bi-plus-lg" aria-hidden="true"></i> Adaugă un produs</a>
+</div>
+
+<nav aria-label="Filtrează după stare" class="mb-3">
+    <ul class="nav nav-pills flex-nowrap overflow-auto">
+        @foreach (var tab in tabs)
+        {
+            var active = tab.Status == Model.Status;
+            <li class="nav-item">
+                @if (active)
+                {
+                    <a class="nav-link text-nowrap active bg-success" aria-current="page"
+                       asp-page="./Index" asp-route-status="@tab.Status?.ToString()">@tab.Label</a>
+                }
+                else
+                {
+                    <a class="nav-link text-nowrap text-success"
+                       asp-page="./Index" asp-route-status="@tab.Status?.ToString()">@tab.Label</a>
+                }
+            </li>
+        }
+    </ul>
+</nav>
+
+@if (Model.Items.Count == 0 && Model.Status.HasValue)
+{
+    <partial name="_EmptyState" model="EmptyStates.DonatorNoProductsInSection" />
+}
+else if (Model.Items.Count == 0)
+{
+    <partial name="_EmptyState" model="EmptyStates.DonatorNoProducts" />
+}
+else
+{
+    <partial name="/Pages/Donator/_DonatorItemList.cshtml" model="new DonatorItemListModel(Model.Items, returnUrl)" />
+}

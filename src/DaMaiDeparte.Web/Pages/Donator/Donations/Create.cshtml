@@ -1,0 +1,28 @@
+@page
+@model DaMaiDeparte.Web.Pages.Donator.Donations.CreateModel
+@{
+    ViewData["Title"] = "Adaugă un produs pentru donație";
+}
+
+<div class="form-card">
+    <h1 class="h3 mb-2">Adaugă un produs pentru donație</h1>
+    <p class="text-muted mb-4">Completează informațiile de mai jos pentru a publica produsul.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                <partial name="_DonationFormFields" model="new DonationFormViewModel { Input = Model.Input, Categories = Model.Categories, Conditions = Model.Conditions }" />
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-send" aria-hidden="true"></i> Publică produsul
+                    </button>
+                    <a class="btn btn-outline-secondary btn-lg" asp-page="/Donator/Dashboard">Renunță</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

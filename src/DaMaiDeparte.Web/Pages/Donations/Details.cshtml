@@ -1,0 +1,80 @@
+@page "{id:int}"
+@model DaMaiDeparte.Web.Pages.Donations.DetailsModel
+@{
+    var d = Model.Donation;
+    ViewData["Title"] = d.Title;
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isReceiver = User.IsInRole(AppRoles.Receiver);
+    var loginUrl = Url.Page("/Account/Login", new { area = "Identity", returnUrl = Url.Page("/Donations/Details", new { id = d.Id }) });
+}
+
+<a class="d-inline-block mb-3" asp-page="/Donations/Index">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> Înapoi la produse
+</a>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <partial name="_DonationImage" model='new DonationImageModel(d.ImagePath, d.Title, "donation-detail-img")' />
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+            <h1 class="h3 mb-0 text-break">@d.Title</h1>
+            <partial name="_StatusBadge" model="d.Status" />
+        </div>
+
+        <dl class="donation-meta mb-4">
+            <div><dt>Categorie</dt><dd>@d.Category.Name</dd></div>
+            <div><dt>Stare</dt><dd>@d.Condition.ToLabel()</dd></div>
+            <div><dt>Zonă de predare</dt><dd>@d.PickupArea</dd></div>
+            <div><dt>Publicat la</dt><dd>@RoDate.FormatDate(d.CreatedAt)</dd></div>
+            <div><dt>Donat de</dt><dd>@d.Donator.FirstName</dd></div>
+        </dl>
+
+        <h2 class="h6">Descriere</h2>
+        <p class="text-break" style="white-space: pre-line;">@d.Description</p>
+
+        <div class="mt-4">
+            @if (d.Status == DonationStatus.Completed)
+            {
+                <div class="alert alert-secondary mb-0" role="status"><i class="bi bi-check2-all" aria-hidden="true"></i> Donație finalizată</div>
+            }
+            else if (d.Status == DonationStatus.Reserved)
+            {
+                if (Model.MyReservationId.HasValue)
+                {
+                    <div class="alert alert-success" role="status">Ai rezervat acest produs.</div>
+                    <a class="btn btn-success btn-lg" asp-page="/Receiver/Reservations/Details" asp-route-id="@Model.MyReservationId">Vezi rezervarea</a>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary btn-lg" disabled>Produs rezervat</button>
+                }
+            }
+            else if (Model.IsOwner)
+            {
+                <p class="text-muted">Acesta este produsul tău.</p>
+                <a class="btn btn-outline-success" asp-page="/Donator/Donations/Details" asp-route-id="@d.Id">Gestionează produsul</a>
+            }
+            else if (!isAuthenticated)
+            {
+                <a class="btn btn-success btn-lg" href="@loginUrl">
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Autentifică-te pentru a rezerva
+                </a>
+                <p class="small text-muted mt-2 mb-0">Nu ai încă un cont? <a asp-area="Identity" asp-page="/Account/Register">Creează unul</a></p>
+            }
+            else if (isReceiver)
+            {
+                <form method="post" asp-page-handler="Reserve" asp-route-id="@d.Id">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-bookmark-check" aria-hidden="true"></i> Rezervă produsul
+                    </button>
+                </form>
+                <p class="small text-muted mt-2 mb-0">După rezervare, vei putea stabili împreună cu donatorul detaliile predării.</p>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Doar beneficiarii pot rezerva produse.</p>
+            }
+        </div>
+    </div>
+</div>

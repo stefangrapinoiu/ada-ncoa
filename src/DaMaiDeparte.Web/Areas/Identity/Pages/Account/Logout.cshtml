@@ -1,0 +1,16 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Deconectare";
+}
+
+<div class="card auth-card">
+    <div class="card-body p-4 p-md-5 text-center">
+        <h1 class="h3 mb-3">Deconectare</h1>
+        <p class="text-muted">Ești sigur că vrei să te deconectezi?</p>
+        <form method="post">
+            <button type="submit" class="btn btn-success">Deconectare</button>
+            <a class="btn btn-outline-secondary" asp-page="/Index" asp-area="">Renunță</a>
+        </form>
+    </div>
+</div>

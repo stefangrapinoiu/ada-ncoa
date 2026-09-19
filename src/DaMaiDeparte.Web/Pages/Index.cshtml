@@ -1,0 +1,88 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Acasă";
+    var donateUrl = User.IsInRole(AppRoles.Donator)
+        ? Url.Page("/Donator/Donations/Create")
+        : User.Identity?.IsAuthenticated == true
+            ? null
+            : Url.Page("/Account/Register", new { area = "Identity" });
+}
+
+<section class="hero mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-3">Ultima oprire înainte de risipă.</h1>
+            <p class="lead mb-4">Ai acasă obiecte pe care nu le mai folosești? Oferă-le gratuit unei persoane care are nevoie de ele și contribuie la reducerea risipei.</p>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <a class="btn btn-success btn-lg" asp-page="/Donations/Index">
+                    <i class="bi bi-search" aria-hidden="true"></i> Vezi produsele disponibile
+                </a>
+                @if (donateUrl is not null)
+                {
+                    <a class="btn btn-outline-success btn-lg" href="@donateUrl">
+                        <i class="bi bi-gift" aria-hidden="true"></i> Donează un produs
+                    </a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4 d-none d-lg-flex justify-content-center">
+            <i class="bi bi-recycle hero-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5 text-center">
+    <h2 class="h3 mb-3">Mai puțină risipă. Mai mult ajutor.</h2>
+    <p class="text-muted mx-auto" style="max-width: 44rem;">@AppInfo.Name conectează persoanele care vor să ofere obiecte pe care nu le mai folosesc cu persoane care le pot pune din nou în valoare.</p>
+</section>
+
+<section class="mb-5" aria-labelledby="how-it-works">
+    <h2 id="how-it-works" class="h3 text-center mb-4">Cum funcționează?</h2>
+    <ol class="row g-3 list-unstyled">
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">1</span>
+                <h3 class="h5">Publică un produs</h3>
+                <p class="text-muted mb-0">Adaugă câteva informații și o fotografie a produsului pe care vrei să îl oferi.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">2</span>
+                <h3 class="h5">Produsul este rezervat</h3>
+                <p class="text-muted mb-0">O persoană interesată îl poate rezerva direct din aplicație.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">3</span>
+                <h3 class="h5">Stabiliți predarea</h3>
+                <p class="text-muted mb-0">Alegeți locul și momentul potrivit pentru predarea produsului.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">4</span>
+                <h3 class="h5">Donația este finalizată</h3>
+                <p class="text-muted mb-0">După predare, confirmă finalizarea donației. Produsul rămâne în istoricul vostru.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+@if (Model.Latest.Count > 0)
+{
+    <section aria-labelledby="latest">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 id="latest" class="h3 mb-0">Produse adăugate recent</h2>
+            <a asp-page="/Donations/Index">Vezi toate</a>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+            @foreach (var item in Model.Latest)
+            {
+                <div class="col"><partial name="_DonationCard" model="item" /></div>
+            }
+        </div>
+    </section>
+}

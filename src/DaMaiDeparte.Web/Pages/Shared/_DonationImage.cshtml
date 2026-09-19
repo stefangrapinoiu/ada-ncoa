@@ -1,0 +1,15 @@
+@model DonationImageModel
+@{
+    var url = Model.ImagePath.ToImageUrl();
+}
+@if (url is not null)
+{
+    <img src="@url" alt="@UiText.ImageAlt(Model.Title)" class="@Model.CssClass" loading="lazy" />
+}
+else
+{
+    <div class="@Model.CssClass image-placeholder d-flex flex-column align-items-center justify-content-center text-muted" role="img" aria-label="@UiText.ImageUnavailable">
+        <i class="bi bi-image fs-1" aria-hidden="true"></i>
+        <span class="small">@UiText.ImageUnavailable</span>
+    </div>
+}

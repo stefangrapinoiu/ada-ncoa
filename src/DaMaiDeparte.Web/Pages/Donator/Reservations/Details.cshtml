@@ -1,0 +1,104 @@
+@page "{id:int}"
+@model DaMaiDeparte.Web.Pages.Donator.Reservations.DetailsModel
+@{
+    ViewData["Title"] = "Detalii rezervare";
+    var r = Model.Reservation;
+    var d = r.DonationItem;
+    var minValue = RoDate.ToLocal(DateTime.UtcNow).ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture);
+    var meetingValue = Model.Input.MeetingAt?.ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<a class="d-inline-block mb-3" asp-page="/Donator/Donations/Details" asp-route-id="@d.Id">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> Înapoi la produs
+</a>
+
+<h1 class="h3 mb-4">Detalii rezervare</h1>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex gap-3 align-items-center mb-3">
+                    <partial name="_DonationImage" model='new DonationImageModel(d.ImagePath, d.Title, "donation-thumb")' />
+                    <div>
+                        <div class="small text-muted">Produs</div>
+                        <a class="fw-semibold" asp-page="/Donator/Donations/Details" asp-route-id="@d.Id">@d.Title</a>
+                        <div><partial name="_StatusBadge" model="d.Status" /></div>
+                    </div>
+                </div>
+                <dl class="donation-meta mb-0">
+                    <div><dt>Beneficiar</dt><dd>@r.Receiver.FirstName @r.Receiver.LastName</dd></div>
+                    @if (r.CancelledAt is null)
+                    {
+                        <div><dt>Telefon</dt><dd>@(string.IsNullOrEmpty(r.Receiver.PhoneNumber) ? "—" : r.Receiver.PhoneNumber)</dd></div>
+                        <div><dt>E-mail</dt><dd class="text-break">@r.Receiver.Email</dd></div>
+                    }
+                    <div><dt>Data rezervării</dt><dd>@RoDate.FormatDateTime(r.ReservedAt)</dd></div>
+                    <div><dt>Locul predării</dt><dd>@(r.MeetingLocation ?? "—")</dd></div>
+                    <div><dt>Data și ora predării</dt><dd>@RoDate.FormatDateTime(r.MeetingAt)</dd></div>
+                    <div><dt>Instrucțiuni</dt><dd>@(r.Notes ?? "—")</dd></div>
+                    @if (r.CancelledAt.HasValue)
+                    {
+                        <div><dt>Anulată la</dt><dd>@RoDate.FormatDateTime(r.CancelledAt)</dd></div>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+        @if (Model.CanEdit)
+        {
+            <div class="card mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Stabilește detaliile predării</h2>
+                    <form method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <div class="mb-3">
+                            <label asp-for="Input.MeetingLocation" class="form-label"></label>
+                            <input asp-for="Input.MeetingLocation" class="form-control" placeholder="Ex: Intrarea principală Iulius Mall" maxlength="200" />
+                            <span asp-validation-for="Input.MeetingLocation" class="small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Input.MeetingAt" class="form-label"></label>
+                            <input asp-for="Input.MeetingAt" type="datetime-local" class="form-control" min="@minValue" value="@meetingValue" />
+                            <span asp-validation-for="Input.MeetingAt" class="small"></span>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="Input.Notes" class="form-label"></label>
+                            <textarea asp-for="Input.Notes" class="form-control" rows="3" maxlength="500" placeholder="Ex: Te rog să mă suni când ajungi."></textarea>
+                            <span asp-validation-for="Input.Notes" class="small"></span>
+                        </div>
+                        <button type="submit" class="btn btn-success">Salvează detaliile</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-success">
+                <div class="card-body p-4">
+                    <h2 class="h5">Ai predat produsul?</h2>
+                    <p class="text-muted">După ce beneficiarul a ridicat produsul, confirmă predarea pentru a finaliza donația.</p>
+                    <form method="post" asp-page-handler="Complete" asp-route-id="@r.Id"
+                          data-confirm="@UiText.Confirm.CompleteDonation" data-confirm-button="@UiText.Confirm.CompleteDonationButton"
+                          data-cancel-button="@UiText.Confirm.Back" data-confirm-variant="success">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Confirmă predarea
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+        else if (r.CancelledAt.HasValue)
+        {
+            <div class="alert alert-secondary" role="status">Această rezervare a fost anulată de beneficiar.</div>
+        }
+        else if (d.Status == DonationStatus.Completed)
+        {
+            <div class="alert alert-success" role="status">Donație finalizată la @RoDate.FormatDateTime(d.CompletedAt). Mulțumim!</div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
