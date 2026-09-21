@@ -1,0 +1,28 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Contul a fost creat";
+}
+
+<div class="card auth-card">
+    <div class="card-body p-4 p-md-5 text-center">
+        <i class="bi bi-check-circle-fill text-success display-4" aria-hidden="true"></i>
+
+        <h1 class="h3 mt-3 mb-2">Contul a fost creat</h1>
+
+        <p class="text-muted mb-4">
+            Am creat contul pentru adresa <strong>@Model.Email</strong>.
+            Autentifică-te cu e-mailul și parola pe care le-ai stabilit pentru a intra în aplicație.
+        </p>
+
+        <div class="alert alert-light border text-start small" role="note">
+            <i class="bi bi-info-circle text-success" aria-hidden="true"></i>
+            Locația aleasă la înregistrare a fost salvată în contul tău. O poți schimba oricând din
+            <strong>@UiText.Location.MyLocation</strong>, în setările contului.
+        </div>
+
+        <a class="btn btn-success btn-lg w-100 mt-2" asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Autentifică-te
+        </a>
+    </div>
+</div>

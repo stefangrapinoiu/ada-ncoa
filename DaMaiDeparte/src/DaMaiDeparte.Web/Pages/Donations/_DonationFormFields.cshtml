@@ -1,0 +1,126 @@
+@model DonationFormViewModel
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="alert alert-success d-flex align-items-start gap-2" role="note">
+    <i class="bi bi-info-circle-fill mt-1" aria-hidden="true"></i>
+    <div>
+        <strong>@UiText.Food.OnlyFood</strong>
+        <div class="small mt-1">@UiText.Food.PackagedOnly</div>
+        <div class="small">@UiText.Food.NoMeatNoDairy</div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Input.Title" class="form-label"></label>
+    <input asp-for="Input.Title" class="form-control" placeholder="Ex: Pâine integrală feliată"
+           maxlength="100" autocomplete="off" />
+    <span asp-validation-for="Input.Title" class="small"></span>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+        <label asp-for="Input.FoodCategoryId" class="form-label"></label>
+        <select asp-for="Input.FoodCategoryId" class="form-select">
+            <option value="">Alege o categorie</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id" selected="@(category.Id == Model.Input.FoodCategoryId)">@category.Name</option>
+            }
+        </select>
+        <div class="form-text">Sunt disponibile doar categoriile de alimente aprobate.</div>
+        <span asp-validation-for="Input.FoodCategoryId" class="small"></span>
+    </div>
+    <div class="col-12 col-md-6">
+        <label asp-for="Input.ExpirationDate" class="form-label">@UiText.Food.ExpirationLabel</label>
+        <input asp-for="Input.ExpirationDate" type="text" class="form-control"
+               placeholder="@RoDate.DatePlaceholder" inputmode="numeric" maxlength="10"
+               autocomplete="off" data-date-input />
+        <div class="form-text">
+            Format: @RoDate.DatePlaceholder (zi/lună/an). @UiText.Food.ExpirationHelp
+            @UiText.Food.MinimumShelfLife Cea mai apropiată dată acceptată: @Model.MinExpirationDate.
+        </div>
+        <span asp-validation-for="Input.ExpirationDate" class="small"></span>
+    </div>
+</div>
+
+<fieldset class="mb-3">
+    <legend class="form-label fs-6 mb-2">Unde se află alimentul</legend>
+    <partial name="_LocationFields" model="Model.Picker" />
+</fieldset>
+
+<fieldset class="mb-3">
+    <legend class="form-label fs-6 mb-2">@UiText.Food.PickupTitle</legend>
+    <div class="mb-3">
+        <label asp-for="Input.PickupLocation" class="form-label">@UiText.Food.PickupLocationLabel</label>
+        <input asp-for="Input.PickupLocation" class="form-control" maxlength="200" autocomplete="off"
+               placeholder="Ex: Intrarea principală Iulius Mall" />
+        <div class="form-text">@UiText.Food.PickupLocationHelp</div>
+        <span asp-validation-for="Input.PickupLocation" class="small"></span>
+    </div>
+    <div class="mb-0">
+        <label asp-for="Input.PickupNotes" class="form-label">@UiText.Food.PickupNotesLabel</label>
+        <textarea asp-for="Input.PickupNotes" class="form-control" rows="2" maxlength="500"
+                  placeholder="Ex: zilnic după ora 18:00"></textarea>
+        <div class="form-text">@UiText.Food.PickupNotesHelp</div>
+        <span asp-validation-for="Input.PickupNotes" class="small"></span>
+    </div>
+</fieldset>
+
+<fieldset class="mb-4">
+    <legend class="form-label fs-6 mb-1">Fotografii</legend>
+    <p class="form-text mt-0">@UiText.Food.PhotosHelp</p>
+
+    @if (Model.ExistingImages.Count > 0)
+    {
+        <div class="row row-cols-2 row-cols-md-3 g-3 mb-3">
+            @foreach (var image in Model.ExistingImages)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <img src="@image.Path.ToImageUrl()" alt="@UiText.ImageAlt(Model.Input.Title, image.SortOrder + 1)"
+                             class="card-img-top donation-card-img" />
+                        <div class="card-body p-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Input.RemoveImageIds"
+                                       value="@image.Id" id="removeImage_@image.Id"
+                                       checked="@Model.Input.RemoveImageIds.Contains(image.Id)" />
+                                <label class="form-check-label small" for="removeImage_@image.Id">Elimină</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <label asp-for="Input.Images" class="form-label">Selectează fotografiile</label>
+    <input asp-for="Input.Images" type="file" class="form-control" multiple
+           accept="image/jpeg,image/png,image/webp"
+           data-image-input data-preview-container="imagePreviews" data-max-files="@FoodRules.MaxImages" />
+    <div class="form-text">
+        Minimum o fotografie, maximum @FoodRules.MaxImages. Le poți selecta pe toate dintr-o singură dată.
+        JPG, PNG sau WebP, maximum 5 MB fiecare.
+    </div>
+    <span asp-validation-for="Input.Images" class="small"></span>
+
+    <div id="imagePreviews" class="row row-cols-3 g-2 mt-2" aria-live="polite"></div>
+</fieldset>
+
+<fieldset class="mb-4">
+    <legend class="form-label fs-6 mb-2">Confirmări obligatorii</legend>
+    <div class="form-check mb-2">
+        <input asp-for="Input.ConfirmPackaging" class="form-check-input" id="confirmPackaging" />
+        <label class="form-check-label" for="confirmPackaging">@UiText.Food.ConfirmPackaging</label>
+        <span asp-validation-for="Input.ConfirmPackaging" class="small d-block"></span>
+    </div>
+    <div class="form-check mb-2">
+        <input asp-for="Input.ConfirmNoMeatDairy" class="form-check-input" id="confirmNoMeatDairy" />
+        <label class="form-check-label" for="confirmNoMeatDairy">@UiText.Food.ConfirmNoMeatDairy</label>
+        <span asp-validation-for="Input.ConfirmNoMeatDairy" class="small d-block"></span>
+    </div>
+    <div class="form-check">
+        <input asp-for="Input.ConfirmExpiryVisible" class="form-check-input" id="confirmExpiryVisible" />
+        <label class="form-check-label" for="confirmExpiryVisible">@UiText.Food.ConfirmExpiryVisible</label>
+        <span asp-validation-for="Input.ConfirmExpiryVisible" class="small d-block"></span>
+    </div>
+</fieldset>

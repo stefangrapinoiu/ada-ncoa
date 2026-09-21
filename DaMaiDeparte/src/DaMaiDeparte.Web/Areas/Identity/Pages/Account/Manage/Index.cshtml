@@ -1,0 +1,69 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Contul meu";
+}
+
+<div class="form-card">
+    <h1 class="h3 mb-4">Contul meu</h1>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Date personale</h2>
+            <dl class="row mb-4 small">
+                <dt class="col-sm-4 text-muted">Adresă de e-mail</dt>
+                <dd class="col-sm-8">@Model.Email</dd>
+                <dt class="col-sm-4 text-muted">@UiText.Location.MyLocation</dt>
+                <dd class="col-sm-8">@(Model.PreferredLocation ?? "Nesetată")</dd>
+                <dt class="col-sm-4 text-muted">Membru din</dt>
+                <dd class="col-sm-8">@RoDate.FormatDate(Model.CreatedAt)</dd>
+            </dl>
+
+            <form method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.FirstName" class="form-label"></label>
+                        <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" />
+                        <span asp-validation-for="Input.FirstName" class="small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.LastName" class="form-label"></label>
+                        <input asp-for="Input.LastName" class="form-control" autocomplete="family-name" />
+                        <span asp-validation-for="Input.LastName" class="small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                        <input asp-for="Input.PhoneNumber" class="form-control" autocomplete="tel" />
+                        <span asp-validation-for="Input.PhoneNumber" class="small"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success mt-4">Salvează modificările</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="h5 mb-1">@UiText.Location.MyLocation</h2>
+                <p class="text-muted small mb-0">@UiText.Location.SettingsHint</p>
+            </div>
+            <a class="btn btn-outline-success" asp-page="/Location" asp-area="">@UiText.Location.Change</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="h5 mb-1">Parolă</h2>
+                <p class="text-muted small mb-0">Folosește o parolă pe care nu o mai folosești în altă parte.</p>
+            </div>
+            <a class="btn btn-outline-success" asp-page="./ChangePassword">Schimbă parola</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

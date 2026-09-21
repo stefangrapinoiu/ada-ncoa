@@ -1,0 +1,89 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Acasă";
+}
+
+<section class="hero mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-3">Mai puțină risipă alimentară. Mai mult ajutor.</h1>
+            <p class="lead mb-4">
+                Ai în casă un aliment ambalat pe care nu îl vei consuma? Oferă-l unei persoane din orașul tău,
+                în loc să ajungă la gunoi.
+            </p>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <a class="btn btn-success btn-lg" asp-area="Identity" asp-page="/Account/Register">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i> Creează cont
+                </a>
+                <a class="btn btn-outline-success btn-lg" asp-area="Identity" asp-page="/Account/Login">
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Am deja cont
+                </a>
+            </div>
+            <p class="small text-muted mt-3 mb-0">
+                Un singur tip de cont: cu același cont poți oferi alimente astăzi și primi alimente mâine.
+            </p>
+        </div>
+        <div class="col-lg-4 d-none d-lg-flex justify-content-center">
+            <i class="bi bi-basket3 hero-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5" aria-labelledby="how-it-works">
+    <h2 id="how-it-works" class="h3 text-center mb-4">Cum funcționează?</h2>
+    <ol class="row g-3 list-unstyled">
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">1</span>
+                <h3 class="h5">Alege locația</h3>
+                <p class="text-muted mb-0">Selectezi orașul și, opțional, cartierul în care vrei să cauți.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">2</span>
+                <h3 class="h5">Publică un aliment</h3>
+                <p class="text-muted mb-0">Denumire, categorie, data expirării și una până la trei fotografii.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">3</span>
+                <h3 class="h5">Cineva îl rezervă</h3>
+                <p class="text-muted mb-0">O persoană din același oraș rezervă alimentul direct din aplicație.</p>
+            </div>
+        </li>
+        <li class="col-12 col-md-6 col-lg-3">
+            <div class="card h-100 p-3">
+                <span class="step-number mb-2" aria-hidden="true">4</span>
+                <h3 class="h5">Stabiliți predarea</h3>
+                <p class="text-muted mb-0">Alegeți un loc public și o oră potrivită, apoi confirmați predarea.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+<section class="mb-5" aria-labelledby="rules">
+    <h2 id="rules" class="h3 text-center mb-4">Reguli de siguranță alimentară</h2>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="card h-100 p-3">
+                <h3 class="h6"><i class="bi bi-box-seam text-success" aria-hidden="true"></i> Doar alimente ambalate</h3>
+                <p class="text-muted small mb-0">@UiText.Food.PackagedOnly</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 p-3">
+                <h3 class="h6"><i class="bi bi-x-octagon text-success" aria-hidden="true"></i> Fără carne și lactate</h3>
+                <p class="text-muted small mb-0">@UiText.Food.NoMeatNoDairy</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 p-3">
+                <h3 class="h6"><i class="bi bi-calendar-check text-success" aria-hidden="true"></i> Termen de valabilitate</h3>
+                <p class="text-muted small mb-0">@UiText.Food.MinimumShelfLife @UiText.Food.ExpirationHelp</p>
+            </div>
+        </div>
+    </div>
+</section>

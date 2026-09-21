@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#198754" />
+    <title>Momentan ești offline – Dă Mai Departe</title>
+    <link rel="icon" type="image/png" href="/images/icons/favicon-32.png" />
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            background: #f7f9f8;
+            color: #212529;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        main {
+            max-width: 28rem;
+            text-align: center;
+            background: #fff;
+            border-radius: 1rem;
+            padding: 2.5rem 1.5rem;
+            box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .06);
+        }
+        img { width: 72px; height: 72px; }
+        h1 { font-size: 1.5rem; margin: 1rem 0 .5rem; }
+        p { color: #6c757d; line-height: 1.5; }
+        button {
+            margin-top: 1rem;
+            min-height: 44px;
+            padding: .5rem 1.5rem;
+            font-size: 1rem;
+            border: 0;
+            border-radius: .5rem;
+            background: #198754;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:focus-visible { outline: 3px solid #0a3622; outline-offset: 2px; }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/images/icons/icon-192.png" alt="" />
+        <h1>Momentan ești offline</h1>
+        <p>Conexiunea la internet nu este disponibilă. Verifică rețeaua și încearcă din nou.</p>
+        <button type="button" onclick="window.location.reload()">Încearcă din nou</button>
+    </main>
+</body>
+</html>
