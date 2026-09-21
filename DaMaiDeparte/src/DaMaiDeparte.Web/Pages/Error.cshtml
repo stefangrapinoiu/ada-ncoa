@@ -1,0 +1,35 @@
+@page "{code:int?}"
+@model ErrorModel
+@{
+    string heading, text, icon;
+    switch (Model.ErrorCode)
+    {
+        case 404:
+            heading = "Pagina nu a fost găsită";
+            text = "Pagina pe care o cauți nu există sau nu mai este disponibilă.";
+            icon = "bi-signpost-split";
+            break;
+        case 403:
+            heading = "Nu ai acces la această pagină";
+            text = "Nu ai permisiunea necesară pentru a accesa această resursă.";
+            icon = "bi-shield-lock";
+            break;
+        default:
+            heading = "A apărut o problemă";
+            text = "Nu am putut finaliza operațiunea. Te rugăm să încerci din nou.";
+            icon = "bi-exclamation-octagon";
+            break;
+    }
+    ViewData["Title"] = heading;
+}
+
+<div class="text-center py-5">
+    <i class="bi @icon display-3 text-success" aria-hidden="true"></i>
+    <h1 class="h2 mt-3">@heading</h1>
+    <p class="text-muted">@text</p>
+    <a class="btn btn-success" asp-page="/Index" asp-area="">Înapoi la pagina principală</a>
+    @if (Model.ErrorCode >= 500 && !string.IsNullOrEmpty(Model.RequestId))
+    {
+        <p class="small text-muted mt-4 mb-0">Cod de referință: <code>@Model.RequestId</code></p>
+    }
+</div>

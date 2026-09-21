@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+appsettings.*.local.json
+src/DaMaiDeparte.Web/wwwroot/uploads/donations/*
+!src/DaMaiDeparte.Web/wwwroot/uploads/donations/.gitkeep
+TestResults/
+.env

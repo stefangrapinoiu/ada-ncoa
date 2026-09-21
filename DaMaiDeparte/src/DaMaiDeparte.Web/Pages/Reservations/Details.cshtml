@@ -1,0 +1,157 @@
+@page "{id:int}"
+@model DaMaiDeparte.Web.Pages.Reservations.DetailsModel
+@{
+    var r = Model.Reservation;
+    var d = r.DonationItem;
+    ViewData["Title"] = $"Rezervare – {d.Title}";
+    var cover = d.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
+}
+
+<a class="d-inline-block mb-3" asp-page="@(Model.IsDonator ? "/Donations/Mine" : "/Reservations/Index")">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    @(Model.IsDonator ? "Înapoi la donațiile mele" : "Înapoi la rezervările mele")
+</a>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-5">
+        <partial name="_DonationImage" model='new DonationImageModel(cover?.Path, d.Title, "donation-detail-img")' />
+    </div>
+
+    <div class="col-12 col-lg-7">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+            <h1 class="h3 mb-0 text-break">@d.Title</h1>
+            <partial name="_StatusBadge" model="d.Status" />
+        </div>
+
+        <dl class="donation-meta mb-4">
+            <div><dt>@UiText.Food.ExpirationLabel</dt><dd>@RoDate.FormatDate(d.ExpirationDate)</dd></div>
+            <div><dt>Categorie</dt><dd>@d.FoodCategory.Name</dd></div>
+            <div><dt>Locație</dt><dd>@DisplayExtensions.ToLocationLabel(d.City.Name, d.Neighborhood?.Name)</dd></div>
+            <div><dt>Rezervat la</dt><dd>@RoDate.FormatDateTime(r.ReservedAt)</dd></div>
+            @if (Model.IsDonator)
+            {
+                <div><dt>Rezervat de</dt><dd>@r.Receiver.FirstName @r.Receiver.LastName</dd></div>
+                @if (!string.IsNullOrWhiteSpace(r.Receiver.PhoneNumber))
+                {
+                    <div><dt>Telefon</dt><dd>@r.Receiver.PhoneNumber</dd></div>
+                }
+            }
+            else
+            {
+                <div><dt>Oferit de</dt><dd>@d.Donator.FirstName @d.Donator.LastName</dd></div>
+                @if (!string.IsNullOrWhiteSpace(d.Donator.PhoneNumber))
+                {
+                    <div><dt>Telefon</dt><dd>@d.Donator.PhoneNumber</dd></div>
+                }
+            }
+        </dl>
+
+        @if (Model.IsCompleted)
+        {
+            <div class="alert alert-success" role="status">
+                <i class="bi bi-check2-all" aria-hidden="true"></i>
+                Donație finalizată la @RoDate.FormatDateTime(d.CompletedAt).
+            </div>
+        }
+        else if (!Model.IsActive)
+        {
+            <div class="alert alert-secondary" role="status">@UiText.Errors.ReservationNotActive</div>
+        }
+        else if (Model.IsDonator)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Detaliile predării</h2>
+                    <form method="post" asp-page-handler="Pickup" asp-route-id="@Model.Id" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.MeetingLocation" class="form-label"></label>
+                            <input asp-for="Input.MeetingLocation" class="form-control" maxlength="200"
+                                   placeholder="Ex: Intrarea principală Iulius Mall" />
+                            <div class="form-text">
+                                Preluat din anunț. @UiText.Food.PickupLocationHelp
+                            </div>
+                            <span asp-validation-for="Input.MeetingLocation" class="small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-sm-7">
+                                <label asp-for="Input.MeetingDate" class="form-label"></label>
+                                <input asp-for="Input.MeetingDate" type="text" class="form-control"
+                                       placeholder="@RoDate.DatePlaceholder" inputmode="numeric" maxlength="10"
+                                       autocomplete="off" data-date-input />
+                                <div class="form-text">Format: @RoDate.DatePlaceholder</div>
+                                <span asp-validation-for="Input.MeetingDate" class="small"></span>
+                            </div>
+                            <div class="col-12 col-sm-5">
+                                <label asp-for="Input.MeetingTime" class="form-label"></label>
+                                <input asp-for="Input.MeetingTime" type="text" class="form-control"
+                                       placeholder="@RoDate.TimePlaceholder" inputmode="numeric" maxlength="5"
+                                       autocomplete="off" data-time-input />
+                                <div class="form-text">Format de 24 de ore, ex: 18:30</div>
+                                <span asp-validation-for="Input.MeetingTime" class="small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Notes" class="form-label"></label>
+                            <textarea asp-for="Input.Notes" class="form-control" rows="2" maxlength="500"></textarea>
+                            <span asp-validation-for="Input.Notes" class="small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-calendar-check" aria-hidden="true"></i> Salvează detaliile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="Complete" asp-route-id="@Model.Id"
+                  data-confirm="@UiText.Confirm.CompleteDonation" data-confirm-button="@UiText.Confirm.CompleteDonationButton"
+                  data-cancel-button="@UiText.Confirm.Back" data-confirm-variant="success">
+                <button type="submit" class="btn btn-outline-success">
+                    <i class="bi bi-check2-circle" aria-hidden="true"></i> Confirmă predarea
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h2 class="h5 mb-2">Detaliile predării</h2>
+                    @if (r.MeetingAt.HasValue)
+                    {
+                        <p class="mb-1"><strong>@r.MeetingLocation</strong></p>
+                        <p class="mb-0">@RoDate.FormatDateTime(r.MeetingAt)</p>
+                        @if (!string.IsNullOrWhiteSpace(r.Notes))
+                        {
+                            <p class="text-muted small mb-0 mt-2" style="white-space: pre-line;">@r.Notes</p>
+                        }
+                    }
+                    else
+                    {
+                        <p class="mb-1"><strong>@d.PickupLocation</strong></p>
+                        @if (!string.IsNullOrWhiteSpace(d.PickupNotes))
+                        {
+                            <p class="text-muted small mb-1" style="white-space: pre-line;">@d.PickupNotes</p>
+                        }
+                        <p class="text-muted mb-0">Ora exactă nu a fost stabilită încă.</p>
+                    }
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="Cancel" asp-route-id="@Model.Id"
+                  data-confirm="@UiText.Confirm.CancelReservation" data-confirm-button="@UiText.Confirm.CancelReservationButton"
+                  data-cancel-button="@UiText.Confirm.Back">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-x-circle" aria-hidden="true"></i> Anulează rezervarea
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

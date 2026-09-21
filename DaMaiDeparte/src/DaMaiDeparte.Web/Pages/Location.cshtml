@@ -1,0 +1,42 @@
+@page
+@model DaMaiDeparte.Web.Pages.LocationModel
+@{
+    ViewData["Title"] = UiText.Location.MyLocation;
+}
+
+<div class="card auth-card">
+    <div class="card-body p-4 p-md-5">
+        <h1 class="h3 mb-2">@UiText.Location.MyLocation</h1>
+
+        @if (Model.IsFirstTimeSetup)
+        {
+            <p class="text-muted mb-4">
+                Contul tău nu are încă o locație salvată. Alege orașul în care vrei să vezi alimentele disponibile.
+            </p>
+        }
+        else
+        {
+            <p class="text-muted mb-4">@UiText.Location.SettingsHint</p>
+        }
+
+        <form method="post" asp-route-returnUrl="@Model.ReturnUrl" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <partial name="_LocationFields" model="Model.Picker" />
+
+            <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check2" aria-hidden="true"></i> @UiText.Location.Save
+                </button>
+                @if (Model.HasCurrentLocation)
+                {
+                    <a class="btn btn-outline-secondary btn-lg" asp-page="/Dashboard">@UiText.Location.Cancel</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

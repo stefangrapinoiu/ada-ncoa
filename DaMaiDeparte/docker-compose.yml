@@ -1,0 +1,19 @@
+# Local SQL Server for development.
+# Usage:  export MSSQL_SA_PASSWORD='<a strong password>'   (or put it in a .env file next to this file, not committed)
+#         docker compose up -d
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: damaideparte-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - damaideparte-sql-data:/var/opt/mssql
+
+volumes:
+  damaideparte-sql-data:

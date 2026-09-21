@@ -1,0 +1,15 @@
+@model LocationBarModel
+<div class="location-bar card mb-4">
+    <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 py-3">
+        <div class="min-w-0">
+            <div class="text-muted small text-uppercase">@UiText.Location.YourLocation</div>
+            <div class="h5 mb-0 text-truncate">
+                <i class="bi bi-geo-alt-fill text-success" aria-hidden="true"></i>
+                @Model.Location.Display
+            </div>
+        </div>
+        <a class="btn btn-outline-success" asp-page="/Location" asp-route-returnUrl="@Model.ReturnUrl">
+            <i class="bi bi-gear" aria-hidden="true"></i> @UiText.Location.Change
+        </a>
+    </div>
+</div>
