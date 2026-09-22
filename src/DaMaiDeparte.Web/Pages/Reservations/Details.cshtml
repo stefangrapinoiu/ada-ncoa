@@ -80,7 +80,7 @@
                                 <label asp-for="Input.MeetingDate" class="form-label"></label>
                                 <input asp-for="Input.MeetingDate" type="text" class="form-control"
                                        placeholder="@RoDate.DatePlaceholder" inputmode="numeric" maxlength="10"
-                                       autocomplete="off" data-date-input />
+                                       autocomplete="off" data-date-input data-min-date="@RoDate.ToDateInput(RoDate.Today)" />
                                 <div class="form-text">Format: @RoDate.DatePlaceholder</div>
                                 <span asp-validation-for="Input.MeetingDate" class="small"></span>
                             </div>
