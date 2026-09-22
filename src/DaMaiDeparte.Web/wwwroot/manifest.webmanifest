@@ -10,7 +10,7 @@
   "lang": "ro-RO",
   "dir": "ltr",
   "background_color": "#ffffff",
-  "theme_color": "#198754",
+  "theme_color": "#047857",
   "categories": ["food", "lifestyle", "social"],
   "icons": [
     { "src": "/images/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
@@ -19,7 +19,7 @@
     { "src": "/images/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Alimente disponibile", "short_name": "Alimente", "url": "/Dashboard" },
+    { "name": "Anunțuri disponibile", "short_name": "Anunțuri", "url": "/Dashboard" },
     { "name": "Adaugă un aliment", "short_name": "Donează", "url": "/Donations/Create" },
     { "name": "Rezervările mele", "short_name": "Rezervări", "url": "/Reservations" }
   ]

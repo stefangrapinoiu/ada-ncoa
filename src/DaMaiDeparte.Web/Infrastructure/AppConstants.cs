@@ -8,7 +8,7 @@ public static class AppInfo
     public const string Tagline = "Mai puțină risipă alimentară. Mai mult ajutor.";
     public const string CultureName = "ro-RO";
     public const string TimeZoneId = "Europe/Bucharest";
-    public const string ThemeColor = "#198754";
+    public const string ThemeColor = "#047857";
 
     /// <summary>ISO code of the only country activated in Version 1.</summary>
     public const string DefaultCountryCode = "RO";

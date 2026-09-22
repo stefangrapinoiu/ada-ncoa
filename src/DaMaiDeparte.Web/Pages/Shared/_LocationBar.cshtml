@@ -2,13 +2,13 @@
 <div class="location-bar card mb-4">
     <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 py-3">
         <div class="min-w-0">
-            <div class="text-muted small text-uppercase">@UiText.Location.YourLocation</div>
-            <div class="h5 mb-0 text-truncate">
+            <div class="text-uppercase fw-semibold" style="font-size:.7rem;letter-spacing:.05em;color:var(--dmd-ink-faint);">@UiText.Location.YourLocation</div>
+            <div class="fw-bold text-truncate mb-0" style="font-size:1.1rem;color:var(--dmd-ink);">
                 <i class="bi bi-geo-alt-fill text-success" aria-hidden="true"></i>
                 @Model.Location.Display
             </div>
         </div>
-        <a class="btn btn-outline-success" asp-page="/Location" asp-route-returnUrl="@Model.ReturnUrl">
+        <a class="btn-chip" asp-page="/Location" asp-route-returnUrl="@Model.ReturnUrl">
             <i class="bi bi-gear" aria-hidden="true"></i> @UiText.Location.Change
         </a>
     </div>

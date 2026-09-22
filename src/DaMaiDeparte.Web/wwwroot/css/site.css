@@ -1,9 +1,32 @@
 :root {
-    --dmd-green: #198754;
-    --dmd-green-dark: #146c43;
-    --dmd-green-soft: #e8f5ee;
+    /* Brand — from the "Ada-nCoa — PWA UI/UX" design canvas */
+    --dmd-green: #047857;
+    --dmd-green-dark: #036b4d;
+    --dmd-green-soft: #e8f7ef;
+    --dmd-accent: #f97316;
+    --dmd-ink: #111814;
+    --dmd-ink-soft: #4a5550;
+    --dmd-ink-faint: #5f6a64;
+    --dmd-border: #ecefed;
+    --dmd-surface-soft: #f1f3f2;
     --dmd-bg: #f7f9f8;
-    --dmd-radius: 1rem;
+    --dmd-radius: 1.25rem;
+    --dmd-radius-sm: .875rem;
+    --dmd-font: 'Plus Jakarta Sans', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Bootstrap overrides so .btn-success / .text-success / .bg-success / badges follow the brand */
+    --bs-success: var(--dmd-green);
+    --bs-success-rgb: 4, 120, 87;
+    --bs-primary: var(--dmd-green);
+    --bs-primary-rgb: 4, 120, 87;
+    --bs-link-color: var(--dmd-green);
+    --bs-link-color-rgb: 4, 120, 87;
+    --bs-link-hover-color: var(--dmd-green-dark);
+    --bs-link-hover-color-rgb: 3, 107, 77;
+    --bs-body-font-family: var(--dmd-font);
+    --bs-border-radius: var(--dmd-radius-sm);
+    --bs-border-radius-lg: var(--dmd-radius);
+    --bs-border-radius-pill: 999px;
 }
 
 html {
@@ -17,7 +40,14 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--dmd-font);
+    color: var(--dmd-ink);
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: var(--dmd-font);
+    font-weight: 800;
+    letter-spacing: -0.01em;
 }
 
 main:focus {
@@ -50,17 +80,126 @@ button:focus-visible,
     text-decoration: none;
 }
 
-/* Buttons: comfortable tap targets */
+/* ---- Brand mark (navbar logo) ---- */
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    color: var(--dmd-ink) !important;
+    text-decoration: none !important;
+}
+
+.brand-mark .brand-leaf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--dmd-green);
+    flex-shrink: 0;
+}
+
+.brand-mark .brand-hyphen {
+    color: var(--dmd-accent);
+}
+
+/* ---- Buttons: comfortable tap targets, pill shape ---- */
 .btn {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: .35rem;
+    border-radius: 999px;
+    font-weight: 700;
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
 }
 
 .btn-sm {
     min-height: 36px;
+}
+
+.btn-success,
+.btn-primary {
+    background-color: var(--dmd-green);
+    border-color: var(--dmd-green);
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--dmd-green-dark);
+    border-color: var(--dmd-green-dark);
+}
+
+.btn-outline-success {
+    color: var(--dmd-green);
+    border-color: var(--dmd-green);
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus {
+    background-color: var(--dmd-green);
+    border-color: var(--dmd-green);
+}
+
+/* Chip-style buttons/links (filter chips, "Toate cartierele", "Filtre") */
+.btn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 40px;
+    padding: 0 .9rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--dmd-surface-soft);
+    color: var(--dmd-ink);
+    font-weight: 600;
+    font-size: .85rem;
+    text-decoration: none;
+}
+
+.btn-chip:hover,
+.btn-chip:focus {
+    background: #e5e8e6;
+    color: var(--dmd-ink);
+}
+
+/* Segmented control (Toate / Disponibile / Rezervate) */
+.segmented {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--dmd-surface-soft);
+}
+
+.segmented .nav-link {
+    flex: 1 1 0;
+    text-align: center;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--dmd-ink-soft);
+    background: transparent;
+    border: none;
+}
+
+.segmented .nav-link.active {
+    background: #fff;
+    color: var(--dmd-ink);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(11, 15, 13, .10);
 }
 
 /* Hero */
@@ -96,9 +235,9 @@ button:focus-visible,
 
 /* Cards */
 .card {
-    border: 0;
+    border: 1px solid var(--dmd-border);
     border-radius: var(--dmd-radius);
-    box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .06);
+    box-shadow: 0 1px 2px rgba(16, 24, 20, .04), 0 8px 24px rgba(16, 24, 20, .06);
 }
 
 .card-img-top,
@@ -116,12 +255,19 @@ button:focus-visible,
 
 .donation-card {
     transition: transform .15s ease, box-shadow .15s ease;
+    position: relative;
 }
 
 .donation-card:hover,
 .donation-card:focus-within {
     transform: translateY(-2px);
-    box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
+    box-shadow: 0 4px 10px rgba(16, 24, 20, .06), 0 12px 28px rgba(16, 24, 20, .10);
+}
+
+.donation-card .badge {
+    border-radius: 999px;
+    font-weight: 700;
+    padding: .4em .7em;
 }
 
 .donation-detail-img {
@@ -163,7 +309,7 @@ button:focus-visible,
 
 .donation-meta dt {
     font-weight: 500;
-    color: #6c757d;
+    color: var(--dmd-ink-soft);
 }
 
 .donation-meta dd {
@@ -208,6 +354,7 @@ button:focus-visible,
 
 /* ---- Food listing extras ---- */
 .location-bar {
+    border: 1px solid var(--dmd-border);
     border-left: 4px solid var(--dmd-green);
 }
 
@@ -215,4 +362,76 @@ button:focus-visible,
     width: 100%;
     height: 5.5rem;
     object-fit: cover;
+}
+
+/* ---- Mobile bottom tab bar (Acasă / Adaugă / Donații / Profil) ---- */
+.bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, .98);
+    border-top: 1px solid var(--dmd-border);
+}
+
+.bottom-nav .bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 72px;
+    text-decoration: none;
+    color: var(--dmd-ink-faint);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.bottom-nav .bottom-nav-link.active {
+    color: var(--dmd-green);
+    font-weight: 700;
+}
+
+.bottom-nav .bottom-nav-link i {
+    font-size: 1.35rem;
+}
+
+.bottom-nav .bottom-nav-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-top: -18px;
+    border-radius: 999px;
+    background: var(--dmd-green);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(4, 120, 87, .35);
+    text-decoration: none;
+    flex-shrink: 0;
+    font-size: 1.5rem;
+}
+
+.bottom-nav .bottom-nav-fab:hover,
+.bottom-nav .bottom-nav-fab:focus {
+    color: #fff;
+    background: var(--dmd-green-dark);
+}
+
+body.has-bottom-nav {
+    padding-bottom: 82px;
+}
+
+@media (min-width: 768px) {
+    .bottom-nav {
+        display: none;
+    }
+
+    body.has-bottom-nav {
+        padding-bottom: 0;
+    }
 }

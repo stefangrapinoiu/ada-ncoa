@@ -1,0 +1,24 @@
+@{
+    var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
+    bool IsActive(string page) => string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase);
+}
+<nav class="bottom-nav d-md-none" aria-label="Navigare principală">
+    <a class="bottom-nav-link @(IsActive("/Dashboard") ? "active" : "")" asp-page="/Dashboard"
+       aria-current="@(IsActive("/Dashboard") ? "page" : null)">
+        <i class="bi @(IsActive("/Dashboard") ? "bi-house-door-fill" : "bi-house-door")" aria-hidden="true"></i>
+        Acasă
+    </a>
+    <a class="bottom-nav-fab" asp-page="/Donations/Create" aria-label="Adaugă un aliment">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    </a>
+    <a class="bottom-nav-link @(IsActive("/Donations/Mine") ? "active" : "")" asp-page="/Donations/Mine"
+       aria-current="@(IsActive("/Donations/Mine") ? "page" : null)">
+        <i class="bi @(IsActive("/Donations/Mine") ? "bi-heart-fill" : "bi-heart")" aria-hidden="true"></i>
+        Donații
+    </a>
+    <a class="bottom-nav-link @(IsActive("/Account/Manage/Index") ? "active" : "")" asp-area="Identity" asp-page="/Account/Manage/Index"
+       aria-current="@(IsActive("/Account/Manage/Index") ? "page" : null)">
+        <i class="bi @(IsActive("/Account/Manage/Index") ? "bi-person-fill" : "bi-person")" aria-hidden="true"></i>
+        Profil
+    </a>
+</nav>

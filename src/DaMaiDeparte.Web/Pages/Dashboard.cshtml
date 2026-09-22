@@ -59,7 +59,7 @@
         </div>
 
         <nav class="mt-3" aria-label="Filtrează după stare">
-            <ul class="nav nav-pills flex-nowrap overflow-auto">
+            <div class="segmented flex-nowrap overflow-auto">
                 @foreach (var tab in tabs)
                 {
                     var route = Model.RouteFor(1);
@@ -71,20 +71,16 @@
 
                     if (tab.Filter == Model.Filter)
                     {
-                        <li class="nav-item">
-                            <a class="nav-link text-nowrap active bg-success" aria-current="page"
-                               asp-page="/Dashboard" asp-all-route-data="route">@tab.Label</a>
-                        </li>
+                        <a class="nav-link text-nowrap active" aria-current="page"
+                           asp-page="/Dashboard" asp-all-route-data="route">@tab.Label</a>
                     }
                     else
                     {
-                        <li class="nav-item">
-                            <a class="nav-link text-nowrap text-success"
-                               asp-page="/Dashboard" asp-all-route-data="route">@tab.Label</a>
-                        </li>
+                        <a class="nav-link text-nowrap"
+                           asp-page="/Dashboard" asp-all-route-data="route">@tab.Label</a>
                     }
                 }
-            </ul>
+            </div>
         </nav>
 
         @if (Model.HasFilters)
