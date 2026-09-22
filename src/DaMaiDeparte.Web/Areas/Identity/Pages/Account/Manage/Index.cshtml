@@ -5,19 +5,39 @@
 }
 
 <div class="form-card">
-    <h1 class="h3 mb-4">Contul meu</h1>
+    <h1 class="h3 mb-4">Profil</h1>
 
-    <div class="card mb-4">
+    <div class="card mb-3">
+        <div class="card-body p-4 d-flex flex-row gap-3 align-items-center">
+            <span class="icon-circle icon-circle-neutral flex-shrink-0" aria-hidden="true">
+                <i class="bi bi-person-fill"></i>
+            </span>
+            <div class="min-w-0">
+                <div class="fw-bold text-truncate" style="font-size:1.1rem;color:var(--dmd-ink);">@Model.Email</div>
+                <div class="small" style="color:var(--dmd-ink-soft);">Membru din @RoDate.FormatDate(Model.CreatedAt)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="list-group list-group-flush">
+            <a class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3" asp-page="/Location" asp-area="">
+                <i class="bi bi-geo-alt text-success" aria-hidden="true"></i>
+                <span class="flex-grow-1">@UiText.Location.MyLocation</span>
+                <span class="small text-truncate" style="max-width:140px;color:var(--dmd-ink-faint);">@(Model.PreferredLocation ?? "Nesetată")</span>
+                <i class="bi bi-chevron-right" style="color:var(--dmd-ink-faint);" aria-hidden="true"></i>
+            </a>
+            <a class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3" asp-page="./ChangePassword">
+                <i class="bi bi-shield-lock text-success" aria-hidden="true"></i>
+                <span class="flex-grow-1">Parolă</span>
+                <i class="bi bi-chevron-right" style="color:var(--dmd-ink-faint);" aria-hidden="true"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
         <div class="card-body p-4">
             <h2 class="h5 mb-3">Date personale</h2>
-            <dl class="row mb-4 small">
-                <dt class="col-sm-4 text-muted">Adresă de e-mail</dt>
-                <dd class="col-sm-8">@Model.Email</dd>
-                <dt class="col-sm-4 text-muted">@UiText.Location.MyLocation</dt>
-                <dd class="col-sm-8">@(Model.PreferredLocation ?? "Nesetată")</dd>
-                <dt class="col-sm-4 text-muted">Membru din</dt>
-                <dd class="col-sm-8">@RoDate.FormatDate(Model.CreatedAt)</dd>
-            </dl>
 
             <form method="post" novalidate>
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
@@ -43,25 +63,11 @@
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h2 class="h5 mb-1">@UiText.Location.MyLocation</h2>
-                <p class="text-muted small mb-0">@UiText.Location.SettingsHint</p>
-            </div>
-            <a class="btn btn-outline-success" asp-page="/Location" asp-area="">@UiText.Location.Change</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h2 class="h5 mb-1">Parolă</h2>
-                <p class="text-muted small mb-0">Folosește o parolă pe care nu o mai folosești în altă parte.</p>
-            </div>
-            <a class="btn btn-outline-success" asp-page="./ChangePassword">Schimbă parola</a>
-        </div>
-    </div>
+    <form method="post" asp-area="Identity" asp-page="/Account/Logout">
+        <button type="submit" class="btn btn-logout">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Deconectare
+        </button>
+    </form>
 </div>
 
 @section Scripts {

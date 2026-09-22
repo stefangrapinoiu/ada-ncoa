@@ -443,3 +443,75 @@ body.has-bottom-nav {
 .alert-success .btn-close {
     filter: none;
 }
+
+/* Icon-in-circle badge (profile avatar, empty states) */
+.icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    font-size: 1.35rem;
+}
+
+.icon-circle-neutral {
+    background: var(--dmd-surface-soft);
+    color: var(--dmd-ink-soft);
+}
+
+.icon-circle-brand {
+    background: var(--dmd-green-soft);
+    color: var(--dmd-green);
+}
+
+/* Card-hosted list of settings rows (Profil) */
+.card {
+    overflow: hidden;
+}
+
+.list-group-item-action {
+    border-color: var(--dmd-border);
+    color: var(--dmd-ink);
+}
+
+.list-group-item-action:hover,
+.list-group-item-action:focus {
+    background-color: var(--dmd-surface-soft);
+    color: var(--dmd-ink);
+}
+
+/* Sign-out pill: quiet red, not a destructive-looking full button */
+.btn-logout {
+    background: #feecec;
+    color: #c0262d;
+    border: none;
+}
+
+.btn-logout:hover,
+.btn-logout:focus {
+    background: #fbd9d9;
+    color: #c0262d;
+}
+
+/* Neutral pill CTA used in empty states (secondary emphasis, not the brand green) */
+.btn-chip-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 44px;
+    padding: 0 1.2rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--dmd-surface-soft);
+    color: var(--dmd-ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.btn-chip-cta:hover,
+.btn-chip-cta:focus {
+    background: #e5e8e6;
+    color: var(--dmd-ink);
+}

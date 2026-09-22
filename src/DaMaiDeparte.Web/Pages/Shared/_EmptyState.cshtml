@@ -1,13 +1,15 @@
 @model EmptyStateModel
-<div class="text-center py-5 px-3 empty-state">
-    <i class="bi @Model.Icon display-4 text-success" aria-hidden="true"></i>
-    <h2 class="h4 mt-3">@Model.Heading</h2>
+<div class="text-center py-5 px-3 empty-state d-flex flex-column align-items-center gap-3">
+    <span class="icon-circle icon-circle-brand" aria-hidden="true">
+        <i class="bi @Model.Icon"></i>
+    </span>
+    <h2 class="h5 mb-0">@Model.Heading</h2>
     @if (!string.IsNullOrEmpty(Model.Text))
     {
-        <p class="text-muted mx-auto" style="max-width: 32rem;">@Model.Text</p>
+        <p class="text-muted mx-auto mb-0" style="max-width: 32rem;">@Model.Text</p>
     }
     @if (!string.IsNullOrEmpty(Model.ButtonText) && !string.IsNullOrEmpty(Model.ButtonUrl))
     {
-        <a class="btn btn-success btn-lg" href="@Model.ButtonUrl">@Model.ButtonText</a>
+        <a class="btn-chip-cta" href="@Model.ButtonUrl">@Model.ButtonText</a>
     }
 </div>
