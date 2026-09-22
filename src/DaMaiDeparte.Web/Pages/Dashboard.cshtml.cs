@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace DaMaiDeparte.Web.Pages;
 
 /// <summary>
-/// "Alimente disponibile" — the main screen after login. Everything shown here belongs to the
+/// "Anunțuri disponibile" — the main screen after login. Everything shown here belongs to the
 /// currently selected city; switching city is a session change, not an account change.
 /// </summary>
 public class DashboardModel : PageModel
