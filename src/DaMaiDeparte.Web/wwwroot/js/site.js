@@ -1,4 +1,4 @@
-// Dă Mai Departe — small progressive enhancements. All security checks happen on the server.
+// Ada-ncoa — small progressive enhancements. All security checks happen on the server.
 (function () {
     'use strict';
 

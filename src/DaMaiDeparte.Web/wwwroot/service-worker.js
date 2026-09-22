@@ -1,4 +1,4 @@
-// Dă Mai Departe — service worker.
+// Ada-ncoa — service worker.
 // Strategy:
 //  - static assets (css/js/icons, CDN libraries): cache-first;
 //  - page navigations: network-first, falling back to the offline page;
