@@ -34,7 +34,7 @@
         <label asp-for="Input.ExpirationDate" class="form-label">@UiText.Food.ExpirationLabel</label>
         <input asp-for="Input.ExpirationDate" type="text" class="form-control"
                placeholder="@RoDate.DatePlaceholder" inputmode="numeric" maxlength="10"
-               autocomplete="off" data-date-input />
+               autocomplete="off" data-date-input data-min-date="@Model.MinExpirationDate" />
         <div class="form-text">
             Format: @RoDate.DatePlaceholder (zi/lună/an). @UiText.Food.ExpirationHelp
             @UiText.Food.MinimumShelfLife Cea mai apropiată dată acceptată: @Model.MinExpirationDate.

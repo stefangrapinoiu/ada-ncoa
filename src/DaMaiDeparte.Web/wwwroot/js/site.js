@@ -150,12 +150,40 @@
         input.addEventListener('blur', format);
     }
 
+    // ---- Calendar / clock pickers (Flatpickr), typing still works either way ----
+    // dateFormat/altFormat stay dd/mm/yyyy regardless of the visitor's browser or OS locale,
+    // which a native <input type="date"> cannot guarantee. If the Flatpickr CDN script didn't
+    // load (offline, blocked), the plain dd/mm/yyyy typing mask below still works.
+    if (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.ro) {
+        window.flatpickr.localize(window.flatpickr.l10ns.ro);
+    }
+
     document.querySelectorAll('[data-date-input]').forEach(function (input) {
-        maskInput(input, [2, 2, 4], '/');
+        if (window.flatpickr) {
+            window.flatpickr(input, {
+                dateFormat: 'd/m/Y',
+                allowInput: true,
+                minDate: input.dataset.minDate || undefined,
+                disableMobile: true
+            });
+        } else {
+            maskInput(input, [2, 2, 4], '/');
+        }
     });
 
     document.querySelectorAll('[data-time-input]').forEach(function (input) {
-        maskInput(input, [2, 2], ':');
+        if (window.flatpickr) {
+            window.flatpickr(input, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: 'H:i',
+                time_24hr: true,
+                allowInput: true,
+                disableMobile: true
+            });
+        } else {
+            maskInput(input, [2, 2], ':');
+        }
     });
 
     // ---- Country → city → neighborhood cascade ----
