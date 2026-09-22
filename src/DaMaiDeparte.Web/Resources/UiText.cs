@@ -27,9 +27,10 @@ public static class UiText
         public const string ExpirationTooFar = "Verifică data expirării: pare prea îndepărtată.";
 
         public const string CountryRequired = "Selectează țara.";
-        public const string CityRequired = "Selectează orașul.";
+        public const string CountyRequired = "Selectează județul.";
+        public const string LocalityRequired = "Selectează localitatea.";
         public const string InvalidLocation = "Locația selectată nu este validă.";
-        public const string NeighborhoodNotInCity = "Cartierul selectat nu aparține orașului ales.";
+        public const string NeighborhoodNotInCity = "Cartierul selectat nu aparține localității alese.";
 
         public const string ImagesRequired = "Adaugă cel puțin o fotografie a alimentului.";
         public const string TooManyImages = "Poți adăuga cel mult 3 fotografii.";
@@ -120,7 +121,8 @@ public static class UiText
     public static class Location
     {
         public const string Country = "Țara";
-        public const string City = "Orașul";
+        public const string County = "Județul";
+        public const string Locality = "Localitatea";
         public const string Neighborhood = "Cartierul";
         public const string NeighborhoodHelp = "Opțional. Te ajută să găsești alimente mai aproape de tine.";
         public const string AllNeighborhoods = "Toate cartierele";

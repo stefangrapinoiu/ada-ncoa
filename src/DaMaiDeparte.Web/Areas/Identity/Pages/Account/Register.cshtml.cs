@@ -79,11 +79,11 @@ public class RegisterModel : PageModel
         [Display(Name = "Țara")]
         public int? CountryId { get; set; }
 
-        [Display(Name = "Orașul")]
-        public int? CityId { get; set; }
+        [Display(Name = "Județul")]
+        public int? CountyId { get; set; }
 
-        [Display(Name = "Cartierul")]
-        public int? NeighborhoodId { get; set; }
+        [Display(Name = "Localitatea")]
+        public int? CityId { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -104,15 +104,22 @@ public class RegisterModel : PageModel
             ModelState.AddModelError("Input.CountryId", UiText.Validation.CountryRequired);
         }
 
+        if (Input.CountyId is null)
+        {
+            ModelState.AddModelError("Input.CountyId", UiText.Validation.CountyRequired);
+        }
+
         if (Input.CityId is null)
         {
-            ModelState.AddModelError("Input.CityId", UiText.Validation.CityRequired);
+            ModelState.AddModelError("Input.CityId", UiText.Validation.LocalityRequired);
         }
 
         BrowsingLocation? location = null;
         if (ModelState.IsValid)
         {
-            location = await _locations.ResolveAsync(Input.CountryId, Input.CityId, Input.NeighborhoodId, cancellationToken);
+            // Cartier is not asked at registration (it is optional and chosen later, from
+            // "Schimbă locația"), so it is always null here.
+            location = await _locations.ResolveAsync(Input.CountryId, Input.CountyId, Input.CityId, null, cancellationToken);
             if (location is null)
             {
                 ModelState.AddModelError(string.Empty, UiText.Validation.InvalidLocation);
@@ -163,14 +170,16 @@ public class RegisterModel : PageModel
         Picker = new LocationPickerModel
         {
             Countries = await _locations.GetCountriesAsync(cancellationToken),
+            Counties = await _locations.GetCountiesAsync(cancellationToken),
             Cities = await _locations.GetCitiesAsync(cancellationToken),
-            Neighborhoods = await _locations.GetNeighborhoodsAsync(cancellationToken),
+            Neighborhoods = Array.Empty<Neighborhood>(),
             CountryId = Input.CountryId,
+            CountyId = Input.CountyId,
             CityId = Input.CityId,
-            NeighborhoodId = Input.NeighborhoodId,
             CountryField = "Input.CountryId",
+            CountyField = "Input.CountyId",
             CityField = "Input.CityId",
-            NeighborhoodField = "Input.NeighborhoodId"
+            ShowNeighborhood = false
         };
     }
 }

@@ -81,6 +81,12 @@ public class CreateModel : PageModel
 
     private async Task LoadFormAsync(CancellationToken cancellationToken)
     {
+        var cities = await _locations.GetCitiesAsync(cancellationToken);
+
+        // Not carried on the browsing location itself (the city already implies its județ);
+        // fill it in from the pre-filled city so the donor doesn't have to re-pick it.
+        Input.CountyId ??= cities.FirstOrDefault(c => c.Id == Input.CityId)?.CountyId;
+
         Form = new DonationFormViewModel
         {
             Input = Input,
@@ -88,12 +94,15 @@ public class CreateModel : PageModel
             Picker = new LocationPickerModel
             {
                 Countries = await _locations.GetCountriesAsync(cancellationToken),
-                Cities = await _locations.GetCitiesAsync(cancellationToken),
+                Counties = await _locations.GetCountiesAsync(cancellationToken),
+                Cities = cities,
                 Neighborhoods = await _locations.GetNeighborhoodsAsync(cancellationToken),
                 CountryId = Input.CountryId,
+                CountyId = Input.CountyId,
                 CityId = Input.CityId,
                 NeighborhoodId = Input.NeighborhoodId,
                 CountryField = "Input.CountryId",
+                CountyField = "Input.CountyId",
                 CityField = "Input.CityId",
                 NeighborhoodField = "Input.NeighborhoodId"
             }

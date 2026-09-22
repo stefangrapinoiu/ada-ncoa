@@ -14,6 +14,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Country> Countries => Set<Country>();
 
+    public DbSet<County> Counties => Set<County>();
+
     public DbSet<City> Cities => Set<City>();
 
     public DbSet<Neighborhood> Neighborhoods => Set<Neighborhood>();
@@ -46,19 +48,41 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             country.HasIndex(c => c.Code).IsUnique();
         });
 
+        builder.Entity<County>(county =>
+        {
+            county.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            county.Property(c => c.Code).HasMaxLength(8).IsRequired();
+
+            county.HasOne(c => c.Country)
+                .WithMany(c => c.Counties)
+                .HasForeignKey(c => c.CountryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // A code is unique inside its country (car-plate style: "CJ", "B", ...).
+            county.HasIndex(c => new { c.CountryId, c.Code }).IsUnique();
+        });
+
         builder.Entity<City>(city =>
         {
             city.Property(c => c.Name).HasMaxLength(100).IsRequired();
             city.Property(c => c.Slug).HasMaxLength(100).IsRequired();
 
+            // Country is a denormalized convenience FK (the real hierarchy is Country → County →
+            // City); Country itself only needs a back-reference to its counties.
             city.HasOne(c => c.Country)
-                .WithMany(c => c.Cities)
+                .WithMany()
                 .HasForeignKey(c => c.CountryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            city.HasOne(c => c.County)
+                .WithMany(c => c.Cities)
+                .HasForeignKey(c => c.CountyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // A slug is unique inside its country, so other countries may reuse a city name.
             city.HasIndex(c => new { c.CountryId, c.Slug }).IsUnique();
             city.HasIndex(c => c.IsActive);
+            city.HasIndex(c => c.CountyId);
         });
 
         builder.Entity<Neighborhood>(neighborhood =>

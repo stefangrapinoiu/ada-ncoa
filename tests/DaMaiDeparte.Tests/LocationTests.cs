@@ -15,7 +15,7 @@ public class LocationTests : IDisposable
         await using var db = _database.CreateContext();
 
         var resolved = await _database.CreateLocationService(db)
-            .ResolveAsync(_database.CountryId, _database.ClujId, null);
+            .ResolveAsync(_database.CountryId, null, _database.ClujId, null);
 
         Assert.NotNull(resolved);
         Assert.Equal("Cluj-Napoca", resolved!.CityName);
@@ -29,7 +29,7 @@ public class LocationTests : IDisposable
         await using var db = _database.CreateContext();
 
         var resolved = await _database.CreateLocationService(db)
-            .ResolveAsync(_database.CountryId, _database.ClujId, _database.MarastiId);
+            .ResolveAsync(_database.CountryId, null, _database.ClujId, _database.MarastiId);
 
         Assert.Equal("Cluj-Napoca · Mărăști", resolved!.Display);
     }
@@ -40,7 +40,7 @@ public class LocationTests : IDisposable
         await using var db = _database.CreateContext();
 
         var resolved = await _database.CreateLocationService(db)
-            .ResolveAsync(_database.CountryId, _database.ClujId, _database.BrasovCentruId);
+            .ResolveAsync(_database.CountryId, null, _database.ClujId, _database.BrasovCentruId);
 
         Assert.Null(resolved);
     }
@@ -50,9 +50,33 @@ public class LocationTests : IDisposable
     {
         await using var db = _database.CreateContext();
 
-        var resolved = await _database.CreateLocationService(db).ResolveAsync(9999, _database.ClujId, null);
+        var resolved = await _database.CreateLocationService(db).ResolveAsync(9999, null, _database.ClujId, null);
 
         Assert.Null(resolved);
+    }
+
+    [Fact]
+    public async Task A_city_from_another_county_does_not_resolve()
+    {
+        await using var db = _database.CreateContext();
+
+        var resolved = await _database.CreateLocationService(db)
+            .ResolveAsync(_database.CountryId, _database.BrasovCountyId, _database.ClujId, null);
+
+        Assert.Null(resolved);
+    }
+
+    [Fact]
+    public async Task A_missing_county_is_not_checked_against_the_city()
+    {
+        // A caller that never recorded a county (e.g. re-resolving an old stored preference)
+        // passes null and the county check is skipped entirely.
+        await using var db = _database.CreateContext();
+
+        var resolved = await _database.CreateLocationService(db)
+            .ResolveAsync(_database.CountryId, null, _database.ClujId, null);
+
+        Assert.NotNull(resolved);
     }
 
     [Fact]
@@ -83,7 +107,7 @@ public class LocationTests : IDisposable
     {
         await using (var db = _database.CreateContext())
         {
-            var brasov = await _database.CreateLocationService(db).ResolveAsync(_database.CountryId, _database.BrasovId, null);
+            var brasov = await _database.CreateLocationService(db).ResolveAsync(_database.CountryId, null, _database.BrasovId, null);
             await _database.CreateLocationService(db).SavePreferredAsync(TestDatabase.DonatorId, brasov!);
         }
 

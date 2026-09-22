@@ -2,7 +2,7 @@ namespace DaMaiDeparte.Web.Models;
 
 /// <summary>
 /// A country the platform operates in. Version 1 only activates Romania, but the
-/// hierarchy (Country → City → Neighborhood) is data-driven so other countries can be
+/// hierarchy (Country → County → City → Neighborhood) is data-driven so other countries can be
 /// added later without changing the application.
 /// </summary>
 public class Country
@@ -16,6 +16,29 @@ public class Country
 
     public bool IsActive { get; set; } = true;
 
+    public ICollection<County> Counties { get; set; } = new List<County>();
+}
+
+/// <summary>
+/// A județ ("county"), e.g. "Cluj". Romania's 41 județe plus the separately-governed
+/// municipiul București, which is modelled the same way (its own "county" with a single
+/// city — București itself) so the Country → County → City cascade stays uniform.
+/// </summary>
+public class County
+{
+    public int Id { get; set; }
+
+    public int CountryId { get; set; }
+
+    public Country Country { get; set; } = null!;
+
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Car-plate style code, unique per country, e.g. "CJ", "B" for București.</summary>
+    public string Code { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+
     public ICollection<City> Cities { get; set; } = new List<City>();
 }
 
@@ -26,6 +49,10 @@ public class City
     public int CountryId { get; set; }
 
     public Country Country { get; set; } = null!;
+
+    public int CountyId { get; set; }
+
+    public County County { get; set; } = null!;
 
     public string Name { get; set; } = string.Empty;
 

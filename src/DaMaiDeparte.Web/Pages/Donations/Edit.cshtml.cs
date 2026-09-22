@@ -104,6 +104,12 @@ public class EditModel : PageModel
 
     private async Task LoadFormAsync(IReadOnlyList<DonationImage> existingImages, CancellationToken cancellationToken)
     {
+        var cities = await _locations.GetCitiesAsync(cancellationToken);
+
+        // Not carried on the listing itself (the city already implies its județ); fill it in
+        // from the listing's current city so editing doesn't force re-picking it.
+        Input.CountyId ??= cities.FirstOrDefault(c => c.Id == Input.CityId)?.CountyId;
+
         Form = new DonationFormViewModel
         {
             Input = Input,
@@ -112,12 +118,15 @@ public class EditModel : PageModel
             Picker = new LocationPickerModel
             {
                 Countries = await _locations.GetCountriesAsync(cancellationToken),
-                Cities = await _locations.GetCitiesAsync(cancellationToken),
+                Counties = await _locations.GetCountiesAsync(cancellationToken),
+                Cities = cities,
                 Neighborhoods = await _locations.GetNeighborhoodsAsync(cancellationToken),
                 CountryId = Input.CountryId,
+                CountyId = Input.CountyId,
                 CityId = Input.CityId,
                 NeighborhoodId = Input.NeighborhoodId,
                 CountryField = "Input.CountryId",
+                CountyField = "Input.CountyId",
                 CityField = "Input.CityId",
                 NeighborhoodField = "Input.NeighborhoodId"
             }

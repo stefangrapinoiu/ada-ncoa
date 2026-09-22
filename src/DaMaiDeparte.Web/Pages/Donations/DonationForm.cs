@@ -34,7 +34,12 @@ public class DonationFormInput
     [Display(Name = "Țara")]
     public int? CountryId { get; set; }
 
-    [Display(Name = "Orașul")]
+    /// <summary>UI-only: narrows the localitate dropdown, not persisted on the donation itself
+    /// (the city already implies its județ).</summary>
+    [Display(Name = "Județul")]
+    public int? CountyId { get; set; }
+
+    [Display(Name = "Localitatea")]
     public int? CityId { get; set; }
 
     [Display(Name = "Cartierul")]
@@ -111,9 +116,14 @@ public class DonationFormInput
             modelState.AddModelError($"Input.{nameof(CountryId)}", UiText.Validation.CountryRequired);
         }
 
+        if (CountyId is null)
+        {
+            modelState.AddModelError($"Input.{nameof(CountyId)}", UiText.Validation.CountyRequired);
+        }
+
         if (CityId is null)
         {
-            modelState.AddModelError($"Input.{nameof(CityId)}", UiText.Validation.CityRequired);
+            modelState.AddModelError($"Input.{nameof(CityId)}", UiText.Validation.LocalityRequired);
         }
 
         return expiration;

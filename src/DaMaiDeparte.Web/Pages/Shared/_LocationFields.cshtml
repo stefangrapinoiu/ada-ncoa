@@ -1,9 +1,11 @@
 @model LocationPickerModel
 @{
     var countryId = LocationPickerModel.IdFor(Model.CountryField);
+    var countyId = LocationPickerModel.IdFor(Model.CountyField);
     var cityId = LocationPickerModel.IdFor(Model.CityField);
     var neighborhoodId = LocationPickerModel.IdFor(Model.NeighborhoodField);
-    var columnClass = Model.Inline ? "col-12 col-md-4" : "col-12";
+    var visibleColumns = Model.ShowNeighborhood ? 4 : 3;
+    var columnClass = Model.Inline ? $"col-12 col-md-{12 / visibleColumns}" : "col-12";
     var selectedCountry = Model.CountryId ?? (Model.Countries.Count == 1 ? Model.Countries[0].Id : null);
 }
 
@@ -24,30 +26,45 @@
     </div>
 
     <div class="@columnClass">
-        <label for="@cityId" class="form-label">@UiText.Location.City</label>
+        <label for="@countyId" class="form-label">@UiText.Location.County</label>
+        <select id="@countyId" name="@Model.CountyField" class="form-select" data-location-county required>
+            <option value="">Alege județul</option>
+            @foreach (var county in Model.Counties)
+            {
+                <option value="@county.Id" data-country="@county.CountryId" selected="@(county.Id == Model.CountyId)">@county.Name</option>
+            }
+        </select>
+        @Html.ValidationMessage(Model.CountyField, new { @class = "small text-danger d-block" })
+    </div>
+
+    <div class="@columnClass">
+        <label for="@cityId" class="form-label">@UiText.Location.Locality</label>
         <select id="@cityId" name="@Model.CityField" class="form-select" data-location-city required>
-            <option value="">Alege orașul</option>
+            <option value="">Alege localitatea</option>
             @foreach (var city in Model.Cities)
             {
-                <option value="@city.Id" data-country="@city.CountryId" selected="@(city.Id == Model.CityId)">@city.Name</option>
+                <option value="@city.Id" data-county="@city.CountyId" selected="@(city.Id == Model.CityId)">@city.Name</option>
             }
         </select>
         @Html.ValidationMessage(Model.CityField, new { @class = "small text-danger d-block" })
     </div>
 
-    <div class="@columnClass">
-        <label for="@neighborhoodId" class="form-label">@UiText.Location.Neighborhood</label>
-        <select id="@neighborhoodId" name="@Model.NeighborhoodField" class="form-select" data-location-neighborhood>
-            <option value="">@Model.NeighborhoodEmptyLabel</option>
-            @foreach (var neighborhood in Model.Neighborhoods)
+    @if (Model.ShowNeighborhood)
+    {
+        <div class="@columnClass">
+            <label for="@neighborhoodId" class="form-label">@UiText.Location.Neighborhood</label>
+            <select id="@neighborhoodId" name="@Model.NeighborhoodField" class="form-select" data-location-neighborhood>
+                <option value="">@Model.NeighborhoodEmptyLabel</option>
+                @foreach (var neighborhood in Model.Neighborhoods)
+                {
+                    <option value="@neighborhood.Id" data-city="@neighborhood.CityId" selected="@(neighborhood.Id == Model.NeighborhoodId)">@neighborhood.Name</option>
+                }
+            </select>
+            @if (Model.ShowNeighborhoodHelp)
             {
-                <option value="@neighborhood.Id" data-city="@neighborhood.CityId" selected="@(neighborhood.Id == Model.NeighborhoodId)">@neighborhood.Name</option>
+                <div class="form-text">@UiText.Location.NeighborhoodHelp</div>
             }
-        </select>
-        @if (Model.ShowNeighborhoodHelp)
-        {
-            <div class="form-text">@UiText.Location.NeighborhoodHelp</div>
-        }
-        @Html.ValidationMessage(Model.NeighborhoodField, new { @class = "small text-danger d-block" })
-    </div>
+            @Html.ValidationMessage(Model.NeighborhoodField, new { @class = "small text-danger d-block" })
+        </div>
+    }
 </div>

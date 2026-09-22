@@ -5,7 +5,7 @@ public static class EmptyStates
 {
     public static readonly EmptyStateModel NoFoodInCity = new(
         "Momentan nu există alimente disponibile aici",
-        "Revino în curând sau încearcă alt oraș ori alt cartier. Poți fi tu primul care oferă ceva.",
+        "Revino în curând sau încearcă altă localitate ori alt cartier. Poți fi tu primul care oferă ceva.",
         "Adaugă un aliment",
         "/Donations/Create",
         "bi-basket");
@@ -28,7 +28,7 @@ public static class EmptyStates
 
     public static readonly EmptyStateModel NoActiveReservations = new(
         "Nu ai rezervări active",
-        "Descoperă alimentele disponibile în orașul tău și rezervă ce îți este util.",
+        "Descoperă alimentele disponibile în localitatea ta și rezervă ce îți este util.",
         "Vezi alimentele",
         "/Dashboard",
         "bi-bag-heart");

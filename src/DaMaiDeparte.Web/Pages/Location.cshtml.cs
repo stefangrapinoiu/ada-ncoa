@@ -30,6 +30,9 @@ public class LocationModel : PageModel
     public int? CountryId { get; set; }
 
     [BindProperty]
+    public int? CountyId { get; set; }
+
+    [BindProperty]
     public int? CityId { get; set; }
 
     [BindProperty]
@@ -75,15 +78,20 @@ public class LocationModel : PageModel
             ModelState.AddModelError(nameof(CountryId), UiText.Validation.CountryRequired);
         }
 
+        if (CountyId is null)
+        {
+            ModelState.AddModelError(nameof(CountyId), UiText.Validation.CountyRequired);
+        }
+
         if (CityId is null)
         {
-            ModelState.AddModelError(nameof(CityId), UiText.Validation.CityRequired);
+            ModelState.AddModelError(nameof(CityId), UiText.Validation.LocalityRequired);
         }
 
         BrowsingLocation? resolved = null;
         if (ModelState.IsValid)
         {
-            resolved = await _locations.ResolveAsync(CountryId, CityId, NeighborhoodId, cancellationToken);
+            resolved = await _locations.ResolveAsync(CountryId, CountyId, CityId, NeighborhoodId, cancellationToken);
             if (resolved is null)
             {
                 ModelState.AddModelError(string.Empty, UiText.Validation.InvalidLocation);
@@ -113,15 +121,24 @@ public class LocationModel : PageModel
 
     private async Task LoadPickerAsync(CancellationToken cancellationToken)
     {
+        var cities = await _locations.GetCitiesAsync(cancellationToken);
+
+        // Not stored on the profile (it's derivable from the city), so it's filled in here
+        // whenever a city is already known but no county was posted/preselected yet.
+        CountyId ??= cities.FirstOrDefault(c => c.Id == CityId)?.CountyId;
+
         Picker = new LocationPickerModel
         {
             Countries = await _locations.GetCountriesAsync(cancellationToken),
-            Cities = await _locations.GetCitiesAsync(cancellationToken),
+            Counties = await _locations.GetCountiesAsync(cancellationToken),
+            Cities = cities,
             Neighborhoods = await _locations.GetNeighborhoodsAsync(cancellationToken),
             CountryId = CountryId,
+            CountyId = CountyId,
             CityId = CityId,
             NeighborhoodId = NeighborhoodId,
             CountryField = nameof(CountryId),
+            CountyField = nameof(CountyId),
             CityField = nameof(CityId),
             NeighborhoodField = nameof(NeighborhoodId),
             NeighborhoodEmptyLabel = UiText.Location.AllNeighborhoods,

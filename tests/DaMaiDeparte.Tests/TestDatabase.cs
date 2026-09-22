@@ -37,8 +37,13 @@ public sealed class TestDatabase : IDisposable
         db.Countries.Add(romania);
         db.SaveChanges();
 
-        var cluj = new City { CountryId = romania.Id, Name = "Cluj-Napoca", Slug = "cluj-napoca", IsActive = true };
-        var brasov = new City { CountryId = romania.Id, Name = "Brașov", Slug = "brasov", IsActive = true };
+        var clujCounty = new County { CountryId = romania.Id, Code = "CJ", Name = "Cluj", IsActive = true };
+        var brasovCounty = new County { CountryId = romania.Id, Code = "BV", Name = "Brașov", IsActive = true };
+        db.Counties.AddRange(clujCounty, brasovCounty);
+        db.SaveChanges();
+
+        var cluj = new City { CountryId = romania.Id, CountyId = clujCounty.Id, Name = "Cluj-Napoca", Slug = "cluj-napoca", IsActive = true };
+        var brasov = new City { CountryId = romania.Id, CountyId = brasovCounty.Id, Name = "Brașov", Slug = "brasov", IsActive = true };
         db.Cities.AddRange(cluj, brasov);
         db.SaveChanges();
 
@@ -70,6 +75,8 @@ public sealed class TestDatabase : IDisposable
         db.SaveChanges();
 
         CountryId = romania.Id;
+        ClujCountyId = clujCounty.Id;
+        BrasovCountyId = brasovCounty.Id;
         ClujId = cluj.Id;
         BrasovId = brasov.Id;
         MarastiId = marasti.Id;
@@ -83,6 +90,10 @@ public sealed class TestDatabase : IDisposable
     }
 
     public int CountryId { get; }
+
+    public int ClujCountyId { get; }
+
+    public int BrasovCountyId { get; }
 
     public int ClujId { get; }
 

@@ -186,11 +186,13 @@
         }
     });
 
-    // ---- Country → city → neighborhood cascade ----
-    // Progressive enhancement only: the server re-validates that the city belongs to the
-    // country and the neighborhood to the city, so a user without JavaScript is still safe.
+    // ---- Country → county → city → neighborhood cascade ----
+    // Progressive enhancement only: the server re-validates every parent/child relationship
+    // (county belongs to country, city to county, neighborhood to city), so a user without
+    // JavaScript is still safe — they just see every option in every select.
     document.querySelectorAll('[data-location-picker]').forEach(function (picker) {
         var country = picker.querySelector('[data-location-country]');
+        var county = picker.querySelector('[data-location-county]');
         var city = picker.querySelector('[data-location-city]');
         var neighborhood = picker.querySelector('[data-location-neighborhood]');
 
@@ -198,18 +200,22 @@
             return;
         }
 
-        function snapshot(select) {
+        function snapshot(select, parentAttribute) {
+            if (!select) {
+                return [];
+            }
             return Array.prototype.map.call(select.options, function (option) {
                 return {
                     value: option.value,
                     text: option.text,
-                    parent: option.dataset.country || option.dataset.city || ''
+                    parent: option.dataset[parentAttribute] || ''
                 };
             });
         }
 
-        var allCities = snapshot(city);
-        var allNeighborhoods = neighborhood ? snapshot(neighborhood) : [];
+        var allCounties = snapshot(county, 'country');
+        var allCities = snapshot(city, 'county');
+        var allNeighborhoods = snapshot(neighborhood, 'city');
 
         function rebuild(select, source, parentValue, attribute) {
             var previous = select.value;
@@ -233,15 +239,22 @@
             });
             select.value = stillValid ? previous : '';
 
-            // A city with no neighborhoods has only the placeholder left.
-            if (select === neighborhood) {
+            // A parent with no children left has only the placeholder option.
+            if (select === neighborhood || select === city) {
                 select.disabled = select.options.length <= 1;
             }
         }
 
+        function refreshCounties() {
+            if (country && county) {
+                rebuild(county, allCounties, country.value, 'country');
+            }
+            refreshCities();
+        }
+
         function refreshCities() {
-            if (country) {
-                rebuild(city, allCities, country.value, 'country');
+            if (county) {
+                rebuild(city, allCities, county.value, 'county');
             }
             refreshNeighborhoods();
         }
@@ -252,12 +265,15 @@
             }
         }
 
-        if (country) {
-            country.addEventListener('change', refreshCities);
+        if (country && county) {
+            country.addEventListener('change', refreshCounties);
+        }
+        if (county) {
+            county.addEventListener('change', refreshCities);
         }
         city.addEventListener('change', refreshNeighborhoods);
 
-        refreshCities();
+        refreshCounties();
     });
 
     // ---- Auto-submit filters when a select changes ----

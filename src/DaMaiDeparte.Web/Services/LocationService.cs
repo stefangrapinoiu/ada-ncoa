@@ -9,20 +9,25 @@ public interface ILocationService
 {
     Task<IReadOnlyList<Country>> GetCountriesAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Every active city, in every active country — small enough to cache in a page.</summary>
-    Task<IReadOnlyList<City>> GetCitiesAsync(CancellationToken cancellationToken = default);
+    /// <summary>Every active county, in every active country — small enough to cache in a page.</summary>
+    Task<IReadOnlyList<County>> GetCountiesAsync(CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<City>> GetCitiesAsync(int countryId, CancellationToken cancellationToken = default);
+    /// <summary>Every active city, in every active county — small enough to cache in a page.</summary>
+    Task<IReadOnlyList<City>> GetCitiesAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Neighborhood>> GetNeighborhoodsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Neighborhood>> GetNeighborhoodsAsync(int cityId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Validates a country/city/neighborhood combination against the database and returns it
-    /// resolved, or null when any part is missing, inactive or does not belong to its parent.
+    /// Validates a country/county/city/neighborhood combination against the database and returns
+    /// it resolved, or null when any part is missing, inactive or does not belong to its parent.
+    /// County is an extra consistency check on top of country/city (already enough to resolve a
+    /// location on its own) — pass null to skip it, e.g. when re-resolving a stored preference
+    /// that never recorded a county.
     /// </summary>
-    Task<BrowsingLocation?> ResolveAsync(int? countryId, int? cityId, int? neighborhoodId, CancellationToken cancellationToken = default);
+    Task<BrowsingLocation?> ResolveAsync(
+        int? countryId, int? countyId, int? cityId, int? neighborhoodId, CancellationToken cancellationToken = default);
 
     /// <summary>The location stored on the user's profile, if it is still valid.</summary>
     Task<BrowsingLocation?> ResolvePreferredAsync(string userId, CancellationToken cancellationToken = default);
@@ -44,17 +49,17 @@ public sealed class LocationService : ILocationService
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<City>> GetCitiesAsync(CancellationToken cancellationToken = default) =>
-        await _db.Cities
+    public async Task<IReadOnlyList<County>> GetCountiesAsync(CancellationToken cancellationToken = default) =>
+        await _db.Counties
             .AsNoTracking()
             .Where(c => c.IsActive && c.Country.IsActive)
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<City>> GetCitiesAsync(int countryId, CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<City>> GetCitiesAsync(CancellationToken cancellationToken = default) =>
         await _db.Cities
             .AsNoTracking()
-            .Where(c => c.IsActive && c.CountryId == countryId)
+            .Where(c => c.IsActive && c.Country.IsActive)
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
@@ -74,6 +79,7 @@ public sealed class LocationService : ILocationService
 
     public async Task<BrowsingLocation?> ResolveAsync(
         int? countryId,
+        int? countyId,
         int? cityId,
         int? neighborhoodId,
         CancellationToken cancellationToken = default)
@@ -92,6 +98,13 @@ public sealed class LocationService : ILocationService
                 cancellationToken);
 
         if (city is null)
+        {
+            return null;
+        }
+
+        // County is an extra consistency check, not part of the identity: a caller that never
+        // recorded one (an older stored preference) passes null and skips it.
+        if (countyId.HasValue && city.CountyId != countyId.Value)
         {
             return null;
         }
@@ -139,14 +152,17 @@ public sealed class LocationService : ILocationService
             return null;
         }
 
+        // County isn't stored on the profile (it's derivable from the city), so it's not
+        // re-checked here.
         var resolved = await ResolveAsync(
             preferred.PreferredCountryId,
+            null,
             preferred.PreferredCityId,
             preferred.PreferredNeighborhoodId,
             cancellationToken);
 
         // The neighborhood may have been deactivated since; fall back to the city alone.
-        return resolved ?? await ResolveAsync(preferred.PreferredCountryId, preferred.PreferredCityId, null, cancellationToken);
+        return resolved ?? await ResolveAsync(preferred.PreferredCountryId, null, preferred.PreferredCityId, null, cancellationToken);
     }
 
     public async Task SavePreferredAsync(string userId, BrowsingLocation location, CancellationToken cancellationToken = default)
