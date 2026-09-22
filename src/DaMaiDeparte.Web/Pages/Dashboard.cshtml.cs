@@ -81,9 +81,11 @@ public class DashboardModel : PageModel
         Neighborhoods = await _locations.GetNeighborhoodsAsync(location.CityId, cancellationToken);
         Categories = await _donations.GetAllowedCategoriesAsync(cancellationToken);
 
-        // The neighborhood filter defaults to the one in the browsing location, and can never
-        // point at a neighborhood from another city.
-        var neighborhoodId = NeighborhoodId ?? location.NeighborhoodId;
+        // The neighborhood filter defaults to the one in the browsing location, but only on the
+        // very first visit (no "cartier" in the URL at all). Once the filter form has been
+        // submitted, an explicit "Toate cartierele" choice (cartier="") must stick — otherwise
+        // it always snaps back to the saved neighborhood and can never be cleared.
+        var neighborhoodId = Request.Query.ContainsKey("cartier") ? NeighborhoodId : location.NeighborhoodId;
         if (neighborhoodId.HasValue && Neighborhoods.All(n => n.Id != neighborhoodId.Value))
         {
             neighborhoodId = null;
@@ -110,8 +112,12 @@ public class DashboardModel : PageModel
     /// <summary>Route values for a given page, preserving the current filters.</summary>
     public Dictionary<string, string> RouteFor(int page)
     {
-        var values = new Dictionary<string, string>();
-        if (NeighborhoodId.HasValue) values["cartier"] = NeighborhoodId.Value.ToString(RoDate.Culture);
+        // "cartier" is always included (even empty) so an explicit "Toate cartierele" choice
+        // survives pagination and tab links instead of silently reverting to the saved neighborhood.
+        var values = new Dictionary<string, string>
+        {
+            ["cartier"] = NeighborhoodId?.ToString(RoDate.Culture) ?? string.Empty
+        };
         if (Filter != FeedFilter.All) values["stare"] = Filter.ToString();
         if (CategoryId.HasValue) values["categorie"] = CategoryId.Value.ToString(RoDate.Culture);
         if (!string.IsNullOrWhiteSpace(Search)) values["q"] = Search;
