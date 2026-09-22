@@ -515,3 +515,65 @@ body.has-bottom-nav {
     background: #e5e8e6;
     color: var(--dmd-ink);
 }
+
+/* ---- Form fields: rounded, bordered, brand focus glow (canvas: LocatieLogin / Filtre) ---- */
+.form-label {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--dmd-ink);
+    margin-bottom: .375rem;
+}
+
+.form-control:not(textarea):not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+.form-select {
+    min-height: 52px;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    border: 1.5px solid var(--dmd-surface-soft);
+    background-color: var(--dmd-surface-soft);
+    font-size: .9375rem;
+    font-weight: 500;
+    color: var(--dmd-ink);
+    transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+
+.form-control:not(textarea):not([type="file"]):not([type="checkbox"]):not([type="radio"]):focus,
+.form-select:focus {
+    border-color: var(--dmd-green);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(4, 120, 87, .15);
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--dmd-surface-soft);
+    opacity: .6;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: #c0262d;
+    background-color: #feecec;
+}
+
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(192, 38, 45, .12);
+}
+
+textarea.form-control {
+    border: 1.5px solid var(--dmd-surface-soft);
+    background-color: var(--dmd-surface-soft);
+}
+
+textarea.form-control:focus {
+    border-color: var(--dmd-green);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(4, 120, 87, .15);
+}
+
+.form-text {
+    color: var(--dmd-ink-faint);
+    font-size: .8125rem;
+}
