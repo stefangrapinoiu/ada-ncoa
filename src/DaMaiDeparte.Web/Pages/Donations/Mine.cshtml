@@ -50,24 +50,22 @@
 </div>
 
 <nav aria-label="Filtrează după stare" class="mb-3">
-    <ul class="nav nav-pills flex-nowrap overflow-auto">
+    <div class="segmented flex-nowrap overflow-auto">
         @foreach (var tab in tabs)
         {
             var active = tab.Status == Model.Status;
-            <li class="nav-item">
-                @if (active)
-                {
-                    <a class="nav-link text-nowrap active bg-success" aria-current="page"
-                       asp-page="./Mine" asp-route-stare="@tab.Status?.ToString()">@tab.Label</a>
-                }
-                else
-                {
-                    <a class="nav-link text-nowrap text-success"
-                       asp-page="./Mine" asp-route-stare="@tab.Status?.ToString()">@tab.Label</a>
-                }
-            </li>
+            if (active)
+            {
+                <a class="nav-link text-nowrap active" aria-current="page"
+                   asp-page="./Mine" asp-route-stare="@tab.Status?.ToString()">@tab.Label</a>
+            }
+            else
+            {
+                <a class="nav-link text-nowrap"
+                   asp-page="./Mine" asp-route-stare="@tab.Status?.ToString()">@tab.Label</a>
+            }
         }
-    </ul>
+    </div>
 </nav>
 
 @if (Model.Items.Count == 0)

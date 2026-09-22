@@ -11,14 +11,10 @@
 </div>
 
 <nav aria-label="Secțiuni rezervări" class="mb-3">
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <a class="nav-link @(Model.ShowHistory ? "text-success" : "active bg-success")" asp-page="./Index">Active</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(Model.ShowHistory ? "active bg-success" : "text-success")" asp-page="./Index" asp-route-tab="istoric">Primite</a>
-        </li>
-    </ul>
+    <div class="segmented flex-nowrap overflow-auto">
+        <a class="nav-link @(Model.ShowHistory ? "" : "active")" aria-current="@(Model.ShowHistory ? null : "page")" asp-page="./Index">Active</a>
+        <a class="nav-link @(Model.ShowHistory ? "active" : "")" aria-current="@(Model.ShowHistory ? "page" : null)" asp-page="./Index" asp-route-tab="istoric">Primite</a>
+    </div>
 </nav>
 
 @if (Model.Items.Count == 0)

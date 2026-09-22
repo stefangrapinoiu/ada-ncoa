@@ -431,3 +431,15 @@ body.has-bottom-nav {
         padding-bottom: 0;
     }
 }
+
+/* Alerts (status messages, form banners): Bootstrap bakes subtle colors at build time rather
+   than deriving them from --bs-success, so they need an explicit brand override here. */
+.alert-success {
+    background-color: var(--dmd-green-soft);
+    border-color: #b9e6cf;
+    color: var(--dmd-green-dark);
+}
+
+.alert-success .btn-close {
+    filter: none;
+}
