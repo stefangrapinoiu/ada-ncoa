@@ -7,37 +7,12 @@
 <div class="card auth-card">
     <div class="card-body p-4 p-md-5">
         <h1 class="h3 mb-2">Creează un cont</h1>
-        <p class="text-muted mb-4">Alătură-te comunității și ajută produsele pe care nu le mai folosești să ajungă la cineva care are nevoie de ele.</p>
+        <p class="text-muted mb-4">
+            Cu un singur cont poți oferi alimente și poți rezerva alimente oferite de alții.
+        </p>
 
         <form method="post" asp-route-returnUrl="@Model.ReturnUrl" novalidate>
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-            <fieldset class="mb-4">
-                <legend class="h6 mb-3">Cum dorești să folosești aplicația?</legend>
-                <div class="row g-3">
-                    <div class="col-12 col-md-6 account-type-option position-relative">
-                        <input class="form-check-input" type="radio" asp-for="Input.AccountType" id="accountTypeDonator"
-                               value="@AccountType.Donator" />
-                        <label for="accountTypeDonator">
-                            <span class="d-flex align-items-center gap-2 fw-semibold mb-1">
-                                <i class="bi bi-gift text-success fs-4" aria-hidden="true"></i> Vreau să donez produse
-                            </span>
-                            <span class="small text-muted d-block">Publică produse pe care nu le mai folosești și oferă-le gratuit altor persoane.</span>
-                        </label>
-                    </div>
-                    <div class="col-12 col-md-6 account-type-option position-relative">
-                        <input class="form-check-input" type="radio" asp-for="Input.AccountType" id="accountTypeReceiver"
-                               value="@AccountType.Receiver" />
-                        <label for="accountTypeReceiver">
-                            <span class="d-flex align-items-center gap-2 fw-semibold mb-1">
-                                <i class="bi bi-bag-heart text-success fs-4" aria-hidden="true"></i> Vreau să primesc produse
-                            </span>
-                            <span class="small text-muted d-block">Descoperă produse oferite gratuit și rezervă ceea ce îți este util.</span>
-                        </label>
-                    </div>
-                </div>
-                <span asp-validation-for="Input.AccountType" class="field-validation-error small d-block mt-2"></span>
-            </fieldset>
 
             <div class="row g-3">
                 <div class="col-12 col-sm-6">
@@ -75,6 +50,11 @@
                     <div id="passwordHelp" class="form-text">Cel puțin 8 caractere, cu o literă mare, o literă mică și o cifră.</div>
                 </div>
             </div>
+
+            <fieldset class="mt-4">
+                <legend class="h6 mb-3">Unde te afli?</legend>
+                <partial name="_LocationFields" model="Model.Picker" />
+            </fieldset>
 
             <button type="submit" class="btn btn-success btn-lg w-100 mt-4">Creează cont</button>
         </form>

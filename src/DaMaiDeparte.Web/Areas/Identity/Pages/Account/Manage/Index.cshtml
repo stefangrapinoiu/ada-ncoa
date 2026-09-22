@@ -2,7 +2,6 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Contul meu";
-    var accountLabel = Model.AccountType == AccountType.Donator ? "Donator" : "Beneficiar";
 }
 
 <div class="form-card">
@@ -14,8 +13,8 @@
             <dl class="row mb-4 small">
                 <dt class="col-sm-4 text-muted">Adresă de e-mail</dt>
                 <dd class="col-sm-8">@Model.Email</dd>
-                <dt class="col-sm-4 text-muted">Tip cont</dt>
-                <dd class="col-sm-8">@accountLabel</dd>
+                <dt class="col-sm-4 text-muted">@UiText.Location.MyLocation</dt>
+                <dd class="col-sm-8">@(Model.PreferredLocation ?? "Nesetată")</dd>
                 <dt class="col-sm-4 text-muted">Membru din</dt>
                 <dd class="col-sm-8">@RoDate.FormatDate(Model.CreatedAt)</dd>
             </dl>
@@ -41,6 +40,16 @@
                 </div>
                 <button type="submit" class="btn btn-success mt-4">Salvează modificările</button>
             </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="h5 mb-1">@UiText.Location.MyLocation</h2>
+                <p class="text-muted small mb-0">@UiText.Location.SettingsHint</p>
+            </div>
+            <a class="btn btn-outline-success" asp-page="/Location" asp-area="">@UiText.Location.Change</a>
         </div>
     </div>
 

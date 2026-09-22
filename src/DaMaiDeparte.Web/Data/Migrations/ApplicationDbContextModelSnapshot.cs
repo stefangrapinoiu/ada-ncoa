@@ -30,9 +30,6 @@ namespace DaMaiDeparte.Web.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("AccountType")
-                        .HasColumnType("int");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -80,6 +77,15 @@ namespace DaMaiDeparte.Web.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("PreferredCityId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreferredCountryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreferredNeighborhoodId")
+                        .HasColumnType("int");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -100,16 +106,214 @@ namespace DaMaiDeparte.Web.Data.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
+                    b.HasIndex("PreferredCityId");
+
+                    b.HasIndex("PreferredCountryId");
+
+                    b.HasIndex("PreferredNeighborhoodId");
+
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("DaMaiDeparte.Web.Models.Category", b =>
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.City", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("CountryId", "Slug")
+                        .IsUnique();
+
+                    b.ToTable("Cities");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.Country", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Countries");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DonationItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DonationItemId", "SortOrder");
+
+                    b.ToTable("DonationImages");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DonatorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateOnly>("ExpirationDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FoodCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NeighborhoodId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PickupLocation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PickupNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("SafetyConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("DonatorId");
+
+                    b.HasIndex("ExpirationDate");
+
+                    b.HasIndex("FoodCategoryId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("CityId", "Status", "ExpirationDate");
+
+                    b.HasIndex("NeighborhoodId", "Status");
+
+                    b.ToTable("DonationItems");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.FoodCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAllowed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -129,10 +333,10 @@ namespace DaMaiDeparte.Web.Data.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("FoodCategories");
                 });
 
-            modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationItem", b =>
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.Neighborhood", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -140,65 +344,29 @@ namespace DaMaiDeparte.Web.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CancelledAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CategoryId")
+                    b.Property<int>("CityId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                    b.Property<int>("Condition")
-                        .HasColumnType("int");
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("DonatorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ImagePath")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("PickupArea")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("CityId", "Name")
+                        .IsUnique();
 
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("DonatorId");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("DonationItems");
+                    b.ToTable("Neighborhoods");
                 });
 
             modelBuilder.Entity("DaMaiDeparte.Web.Models.Reservation", b =>
@@ -378,11 +546,63 @@ namespace DaMaiDeparte.Web.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.ApplicationUser", b =>
+                {
+                    b.HasOne("DaMaiDeparte.Web.Models.City", "PreferredCity")
+                        .WithMany()
+                        .HasForeignKey("PreferredCityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DaMaiDeparte.Web.Models.Country", "PreferredCountry")
+                        .WithMany()
+                        .HasForeignKey("PreferredCountryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DaMaiDeparte.Web.Models.Neighborhood", "PreferredNeighborhood")
+                        .WithMany()
+                        .HasForeignKey("PreferredNeighborhoodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PreferredCity");
+
+                    b.Navigation("PreferredCountry");
+
+                    b.Navigation("PreferredNeighborhood");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.City", b =>
+                {
+                    b.HasOne("DaMaiDeparte.Web.Models.Country", "Country")
+                        .WithMany("Cities")
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationImage", b =>
+                {
+                    b.HasOne("DaMaiDeparte.Web.Models.DonationItem", "DonationItem")
+                        .WithMany("Images")
+                        .HasForeignKey("DonationItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DonationItem");
+                });
+
             modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationItem", b =>
                 {
-                    b.HasOne("DaMaiDeparte.Web.Models.Category", "Category")
-                        .WithMany("Donations")
-                        .HasForeignKey("CategoryId")
+                    b.HasOne("DaMaiDeparte.Web.Models.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DaMaiDeparte.Web.Models.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -392,9 +612,37 @@ namespace DaMaiDeparte.Web.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Category");
+                    b.HasOne("DaMaiDeparte.Web.Models.FoodCategory", "FoodCategory")
+                        .WithMany("Donations")
+                        .HasForeignKey("FoodCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DaMaiDeparte.Web.Models.Neighborhood", "Neighborhood")
+                        .WithMany()
+                        .HasForeignKey("NeighborhoodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("City");
+
+                    b.Navigation("Country");
 
                     b.Navigation("Donator");
+
+                    b.Navigation("FoodCategory");
+
+                    b.Navigation("Neighborhood");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.Neighborhood", b =>
+                {
+                    b.HasOne("DaMaiDeparte.Web.Models.City", "City")
+                        .WithMany("Neighborhoods")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("City");
                 });
 
             modelBuilder.Entity("DaMaiDeparte.Web.Models.Reservation", b =>
@@ -474,14 +722,26 @@ namespace DaMaiDeparte.Web.Data.Migrations
                     b.Navigation("Reservations");
                 });
 
-            modelBuilder.Entity("DaMaiDeparte.Web.Models.Category", b =>
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.City", b =>
                 {
-                    b.Navigation("Donations");
+                    b.Navigation("Neighborhoods");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.Country", b =>
+                {
+                    b.Navigation("Cities");
                 });
 
             modelBuilder.Entity("DaMaiDeparte.Web.Models.DonationItem", b =>
                 {
+                    b.Navigation("Images");
+
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("DaMaiDeparte.Web.Models.FoodCategory", b =>
+                {
+                    b.Navigation("Donations");
                 });
 #pragma warning restore 612, 618
         }

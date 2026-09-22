@@ -3,77 +3,171 @@
 @{
     var d = Model.Donation;
     ViewData["Title"] = d.Title;
-    var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var isReceiver = User.IsInRole(AppRoles.Receiver);
-    var loginUrl = Url.Page("/Account/Login", new { area = "Identity", returnUrl = Url.Page("/Donations/Details", new { id = d.Id }) });
+    var images = d.Images.OrderBy(i => i.SortOrder).ToList();
+    var cover = images.FirstOrDefault();
+    var reservation = Model.ActiveReservation;
 }
 
-<a class="d-inline-block mb-3" asp-page="/Donations/Index">
-    <i class="bi bi-arrow-left" aria-hidden="true"></i> Înapoi la produse
+<a class="d-inline-block mb-3" asp-page="/Dashboard">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> Înapoi la alimente
 </a>
 
 <div class="row g-4">
     <div class="col-12 col-lg-6">
-        <partial name="_DonationImage" model='new DonationImageModel(d.ImagePath, d.Title, "donation-detail-img")' />
+        <partial name="_DonationImage" model='new DonationImageModel(cover?.Path, d.Title, "donation-detail-img")' />
+
+        @if (images.Count > 1)
+        {
+            <div class="row row-cols-3 g-2 mt-1">
+                @for (var i = 1; i < images.Count; i++)
+                {
+                    <div class="col">
+                        <img src="@images[i].Path.ToImageUrl()" alt="@UiText.ImageAlt(d.Title, i + 1)"
+                             class="img-fluid rounded donation-thumb-wide" loading="lazy" />
+                    </div>
+                }
+            </div>
+        }
     </div>
+
     <div class="col-12 col-lg-6">
         <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
             <h1 class="h3 mb-0 text-break">@d.Title</h1>
             <partial name="_StatusBadge" model="d.Status" />
         </div>
 
+        <p class="mb-3">
+            <span class="badge fs-6 @d.ExpirationDate.ToExpiryClass()">
+                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                @UiText.Food.ExpirationLabel: @RoDate.FormatDate(d.ExpirationDate)
+            </span>
+            <span class="text-muted small ms-1">(@RoDate.DescribeRemaining(d.ExpirationDate))</span>
+        </p>
+
         <dl class="donation-meta mb-4">
-            <div><dt>Categorie</dt><dd>@d.Category.Name</dd></div>
-            <div><dt>Stare</dt><dd>@d.Condition.ToLabel()</dd></div>
-            <div><dt>Zonă de predare</dt><dd>@d.PickupArea</dd></div>
+            <div><dt>Categorie</dt><dd>@d.FoodCategory.Name</dd></div>
+            <div><dt>Locație</dt><dd>@DisplayExtensions.ToLocationLabel(d.City.Name, d.Neighborhood?.Name)</dd></div>
             <div><dt>Publicat la</dt><dd>@RoDate.FormatDate(d.CreatedAt)</dd></div>
-            <div><dt>Donat de</dt><dd>@d.Donator.FirstName</dd></div>
+            <div><dt>Oferit de</dt><dd>@d.Donator.FirstName</dd></div>
         </dl>
 
-        <h2 class="h6">Descriere</h2>
-        <p class="text-break" style="white-space: pre-line;">@d.Description</p>
+        <h2 class="h6">@UiText.Food.PickupTitle</h2>
+        <p class="mb-1"><i class="bi bi-geo-alt" aria-hidden="true"></i> <strong>@d.PickupLocation</strong></p>
+        @if (!string.IsNullOrWhiteSpace(d.PickupNotes))
+        {
+            <p class="text-break text-muted small" style="white-space: pre-line;">@d.PickupNotes</p>
+        }
+
+        <div class="alert alert-light border small mt-3" role="note">
+            <i class="bi bi-shield-check text-success" aria-hidden="true"></i>
+            @UiText.Food.PackagedOnly
+        </div>
 
         <div class="mt-4">
-            @if (d.Status == DonationStatus.Completed)
+            @if (Model.IsOwner)
             {
-                <div class="alert alert-secondary mb-0" role="status"><i class="bi bi-check2-all" aria-hidden="true"></i> Donație finalizată</div>
+                <p class="text-muted">Aceasta este donația ta.</p>
+
+                @if (d.Status == DonationStatus.Available)
+                {
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <a class="btn btn-success" asp-page="./Edit" asp-route-id="@d.Id">
+                            <i class="bi bi-pencil" aria-hidden="true"></i> Editează
+                        </a>
+                        <form method="post" asp-page-handler="Cancel" asp-route-id="@d.Id"
+                              data-confirm="@UiText.Confirm.CancelDonation" data-confirm-button="@UiText.Confirm.CancelDonationButton"
+                              data-cancel-button="@UiText.Confirm.Back">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Anulează donația
+                            </button>
+                        </form>
+                    </div>
+                }
+                else if (d.Status == DonationStatus.Reserved && reservation is not null)
+                {
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h2 class="h5">Aliment rezervat</h2>
+                            <p class="mb-3">
+                                Rezervat de <strong>@reservation.Receiver.FirstName</strong> la @RoDate.FormatDateTime(reservation.ReservedAt).
+                                @if (reservation.MeetingAt.HasValue)
+                                {
+                                    <br />
+                                    <span>Predare stabilită: @reservation.MeetingLocation, @RoDate.FormatDateTime(reservation.MeetingAt)</span>
+                                }
+                                else
+                                {
+                                    <br />
+                                    <span class="text-muted">Detaliile predării nu au fost stabilite încă.</span>
+                                }
+                            </p>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <a class="btn btn-success" asp-page="/Reservations/Details" asp-route-id="@reservation.Id">
+                                    <i class="bi bi-calendar-event" aria-hidden="true"></i> Detalii rezervare
+                                </a>
+                                <form method="post" asp-page-handler="Complete" asp-route-id="@d.Id"
+                                      data-confirm="@UiText.Confirm.CompleteDonation" data-confirm-button="@UiText.Confirm.CompleteDonationButton"
+                                      data-cancel-button="@UiText.Confirm.Back" data-confirm-variant="success">
+                                    <button type="submit" class="btn btn-outline-success w-100">
+                                        <i class="bi bi-check2-circle" aria-hidden="true"></i> Confirmă predarea
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (d.Status == DonationStatus.Expired)
+                {
+                    <div class="alert alert-dark" role="status">
+                        Acest aliment a expirat și nu mai apare în lista publică.
+                    </div>
+                    <form method="post" asp-page-handler="Cancel" asp-route-id="@d.Id">
+                        <button type="submit" class="btn btn-outline-secondary">Arhivează donația</button>
+                    </form>
+                }
+                else if (d.Status == DonationStatus.Completed)
+                {
+                    <div class="alert alert-success mb-0" role="status">
+                        <i class="bi bi-check2-all" aria-hidden="true"></i> Donație finalizată. Mulțumim!
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0" role="status">Această donație a fost anulată.</div>
+                }
+            }
+            else if (d.Status == DonationStatus.Completed)
+            {
+                <div class="alert alert-secondary mb-0" role="status">
+                    <i class="bi bi-check2-all" aria-hidden="true"></i> Donație finalizată
+                </div>
+            }
+            else if (Model.IsExpired)
+            {
+                <div class="alert alert-dark mb-0" role="status">
+                    @UiText.Errors.DonationExpired
+                </div>
             }
             else if (d.Status == DonationStatus.Reserved)
             {
                 if (Model.MyReservationId.HasValue)
                 {
-                    <div class="alert alert-success" role="status">Ai rezervat acest produs.</div>
-                    <a class="btn btn-success btn-lg" asp-page="/Receiver/Reservations/Details" asp-route-id="@Model.MyReservationId">Vezi rezervarea</a>
+                    <div class="alert alert-success" role="status">Ai rezervat acest aliment.</div>
+                    <a class="btn btn-success btn-lg" asp-page="/Reservations/Details" asp-route-id="@Model.MyReservationId">Vezi rezervarea</a>
                 }
                 else
                 {
-                    <button type="button" class="btn btn-secondary btn-lg" disabled>Produs rezervat</button>
+                    <button type="button" class="btn btn-secondary btn-lg" disabled>Aliment rezervat</button>
                 }
             }
-            else if (Model.IsOwner)
-            {
-                <p class="text-muted">Acesta este produsul tău.</p>
-                <a class="btn btn-outline-success" asp-page="/Donator/Donations/Details" asp-route-id="@d.Id">Gestionează produsul</a>
-            }
-            else if (!isAuthenticated)
-            {
-                <a class="btn btn-success btn-lg" href="@loginUrl">
-                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Autentifică-te pentru a rezerva
-                </a>
-                <p class="small text-muted mt-2 mb-0">Nu ai încă un cont? <a asp-area="Identity" asp-page="/Account/Register">Creează unul</a></p>
-            }
-            else if (isReceiver)
+            else if (Model.CanReserve)
             {
                 <form method="post" asp-page-handler="Reserve" asp-route-id="@d.Id">
                     <button type="submit" class="btn btn-success btn-lg">
-                        <i class="bi bi-bookmark-check" aria-hidden="true"></i> Rezervă produsul
+                        <i class="bi bi-bookmark-check" aria-hidden="true"></i> Rezervă alimentul
                     </button>
                 </form>
-                <p class="small text-muted mt-2 mb-0">După rezervare, vei putea stabili împreună cu donatorul detaliile predării.</p>
-            }
-            else
-            {
-                <p class="text-muted mb-0">Doar beneficiarii pot rezerva produse.</p>
+                <p class="small text-muted mt-2 mb-0">După rezervare vei putea stabili împreună cu donatorul detaliile predării.</p>
             }
         </div>
     </div>

@@ -1,4 +1,4 @@
-// Ada-ncoa — small progressive enhancements. All security checks happen on the server.
+// Dă Mai Departe — small progressive enhancements. All security checks happen on the server.
 (function () {
     'use strict';
 
@@ -78,24 +78,159 @@
         }, 0);
     });
 
-    // ---- Image preview on donation forms ----
-    var imageInput = document.getElementById('imageInput');
-    var preview = document.getElementById('imagePreview');
-    if (imageInput && preview) {
-        imageInput.addEventListener('change', function () {
-            var file = imageInput.files && imageInput.files[0];
-            if (!file) {
-                preview.classList.add('d-none');
+    // ---- Photo previews for the single multi-select file field ----
+    document.querySelectorAll('[data-image-input]').forEach(function (input) {
+        var container = document.getElementById(input.dataset.previewContainer);
+        if (!container) {
+            return;
+        }
+
+        var maxFiles = parseInt(input.dataset.maxFiles, 10) || 3;
+
+        input.addEventListener('change', function () {
+            container.innerHTML = '';
+
+            var files = Array.prototype.slice.call(input.files || []);
+            if (files.length === 0) {
                 return;
             }
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                preview.src = e.target.result;
-                preview.classList.remove('d-none');
-            };
-            reader.readAsDataURL(file);
+
+            if (files.length > maxFiles) {
+                var warning = document.createElement('div');
+                warning.className = 'col-12 small text-danger';
+                warning.textContent = 'Ai selectat ' + files.length + ' fotografii. Poți adăuga cel mult ' + maxFiles + '.';
+                container.appendChild(warning);
+            }
+
+            files.slice(0, maxFiles).forEach(function (file, index) {
+                var col = document.createElement('div');
+                col.className = 'col';
+
+                var img = document.createElement('img');
+                img.className = 'img-fluid rounded donation-thumb-wide';
+                img.alt = 'Previzualizare fotografia ' + (index + 1);
+                col.appendChild(img);
+                container.appendChild(col);
+
+                var reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+            });
         });
+    });
+
+    // ---- dd/mm/yyyy and hh:mm typing helpers ----
+    // Plain text inputs are used instead of <input type="date">, because a native date field
+    // renders in the *browser's* locale (mm/dd/yyyy on a US system) and the page cannot change
+    // that. These helpers only insert the separators while typing; the server parses the value.
+    function maskInput(input, groups, separator) {
+        function format() {
+            var digits = input.value.replace(/\D/g, '').slice(0, groups.reduce(function (a, b) { return a + b; }, 0));
+            var parts = [];
+            var offset = 0;
+
+            groups.forEach(function (size) {
+                if (digits.length > offset) {
+                    parts.push(digits.substr(offset, size));
+                    offset += size;
+                }
+            });
+
+            input.value = parts.join(separator);
+        }
+
+        input.addEventListener('input', function (event) {
+            // Let the caret behave normally when deleting.
+            if (event.inputType && event.inputType.indexOf('delete') === 0) {
+                return;
+            }
+            format();
+        });
+
+        input.addEventListener('blur', format);
     }
+
+    document.querySelectorAll('[data-date-input]').forEach(function (input) {
+        maskInput(input, [2, 2, 4], '/');
+    });
+
+    document.querySelectorAll('[data-time-input]').forEach(function (input) {
+        maskInput(input, [2, 2], ':');
+    });
+
+    // ---- Country → city → neighborhood cascade ----
+    // Progressive enhancement only: the server re-validates that the city belongs to the
+    // country and the neighborhood to the city, so a user without JavaScript is still safe.
+    document.querySelectorAll('[data-location-picker]').forEach(function (picker) {
+        var country = picker.querySelector('[data-location-country]');
+        var city = picker.querySelector('[data-location-city]');
+        var neighborhood = picker.querySelector('[data-location-neighborhood]');
+
+        if (!city) {
+            return;
+        }
+
+        function snapshot(select) {
+            return Array.prototype.map.call(select.options, function (option) {
+                return {
+                    value: option.value,
+                    text: option.text,
+                    parent: option.dataset.country || option.dataset.city || ''
+                };
+            });
+        }
+
+        var allCities = snapshot(city);
+        var allNeighborhoods = neighborhood ? snapshot(neighborhood) : [];
+
+        function rebuild(select, source, parentValue, attribute) {
+            var previous = select.value;
+            select.innerHTML = '';
+
+            source.forEach(function (item) {
+                if (item.parent !== '' && item.parent !== parentValue) {
+                    return;
+                }
+                var option = document.createElement('option');
+                option.value = item.value;
+                option.text = item.text;
+                if (item.parent !== '') {
+                    option.dataset[attribute] = item.parent;
+                }
+                select.appendChild(option);
+            });
+
+            var stillValid = Array.prototype.some.call(select.options, function (option) {
+                return option.value === previous;
+            });
+            select.value = stillValid ? previous : '';
+
+            // A city with no neighborhoods has only the placeholder left.
+            if (select === neighborhood) {
+                select.disabled = select.options.length <= 1;
+            }
+        }
+
+        function refreshCities() {
+            if (country) {
+                rebuild(city, allCities, country.value, 'country');
+            }
+            refreshNeighborhoods();
+        }
+
+        function refreshNeighborhoods() {
+            if (neighborhood) {
+                rebuild(neighborhood, allNeighborhoods, city.value, 'city');
+            }
+        }
+
+        if (country) {
+            country.addEventListener('change', refreshCities);
+        }
+        city.addEventListener('change', refreshNeighborhoods);
+
+        refreshCities();
+    });
 
     // ---- Auto-submit filters when a select changes ----
     document.querySelectorAll('[data-autosubmit]').forEach(function (select) {

@@ -1,4 +1,5 @@
 using DaMaiDeparte.Web.Data;
+using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
 using DaMaiDeparte.Web.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,9 @@ namespace DaMaiDeparte.Web.Services;
 public sealed class DonationService : IDonationService
 {
     private const int MaxPageSize = 48;
+
+    /// <summary>Sanity bound: a best-before date more than five years out is almost certainly a typo.</summary>
+    private const int MaxShelfLifeYears = 5;
 
     private readonly ApplicationDbContext _db;
     private readonly IFileStorageService _files;
@@ -20,50 +24,58 @@ public sealed class DonationService : IDonationService
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<Category>> GetCategoriesAsync(CancellationToken cancellationToken = default) =>
-        await _db.Categories
+    public async Task<IReadOnlyList<FoodCategory>> GetAllowedCategoriesAsync(CancellationToken cancellationToken = default) =>
+        await _db.FoodCategories
             .AsNoTracking()
+            .Where(c => c.IsActive && c.IsAllowed)
             .OrderBy(c => c.SortOrder)
             .ThenBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-    public async Task<PagedResult<DonationCard>> SearchAvailableAsync(DonationSearchQuery query, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<DonationCard>> SearchFeedAsync(
+        FeedQuery query,
+        string currentUserId,
+        CancellationToken cancellationToken = default)
     {
         var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
         var page = Math.Max(1, query.Page);
+        var today = RoDate.Today;
 
+        // Everything below is composed into a single SQL statement — no in-memory filtering.
         var donations = _db.DonationItems
             .AsNoTracking()
-            .Where(d => d.Status == DonationStatus.Available);
+            .Where(d => d.CityId == query.CityId)
+            .Where(d => d.ExpirationDate >= today);
+
+        donations = query.Filter switch
+        {
+            FeedFilter.Available => donations.Where(d => d.Status == DonationStatus.Available),
+            FeedFilter.Reserved => donations.Where(d => d.Status == DonationStatus.Reserved),
+            // "Toate" never means "everything": completed, cancelled and expired stay hidden.
+            _ => donations.Where(d => d.Status == DonationStatus.Available || d.Status == DonationStatus.Reserved)
+        };
+
+        if (query.NeighborhoodId.HasValue)
+        {
+            donations = donations.Where(d => d.NeighborhoodId == query.NeighborhoodId.Value);
+        }
+
+        if (query.FoodCategoryId.HasValue)
+        {
+            donations = donations.Where(d => d.FoodCategoryId == query.FoodCategoryId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var term = query.Search.Trim();
-            donations = donations.Where(d => d.Title.Contains(term) || d.Description.Contains(term));
+            donations = donations.Where(d => d.Title.Contains(term));
         }
 
-        if (query.CategoryId.HasValue)
-        {
-            donations = donations.Where(d => d.CategoryId == query.CategoryId.Value);
-        }
-
-        if (query.Condition.HasValue)
-        {
-            donations = donations.Where(d => d.Condition == query.Condition.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.Area))
-        {
-            var area = query.Area.Trim();
-            donations = donations.Where(d => d.PickupArea.Contains(area));
-        }
-
-        donations = query.Sort == DonationSort.Oldest
-            ? donations.OrderBy(d => d.CreatedAt).ThenBy(d => d.Id)
-            : donations.OrderByDescending(d => d.CreatedAt).ThenByDescending(d => d.Id);
+        donations = donations
+            .OrderByDescending(d => d.CreatedAt)
+            .ThenByDescending(d => d.Id);
 
         var total = await donations.CountAsync(cancellationToken);
-
         var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
         page = Math.Min(page, totalPages);
 
@@ -71,7 +83,17 @@ public sealed class DonationService : IDonationService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(d => new DonationCard(
-                d.Id, d.Title, d.Category.Name, d.Condition, d.PickupArea, d.Status, d.ImagePath, d.CreatedAt))
+                d.Id,
+                d.Title,
+                d.FoodCategory.Name,
+                d.ExpirationDate,
+                d.City.Name,
+                d.Neighborhood != null ? d.Neighborhood.Name : null,
+                d.PickupLocation,
+                d.Status,
+                d.Images.OrderBy(i => i.SortOrder).Select(i => i.Path).FirstOrDefault(),
+                d.CreatedAt,
+                d.DonatorId == currentUserId))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<DonationCard>
@@ -83,62 +105,75 @@ public sealed class DonationService : IDonationService
         };
     }
 
-    public Task<DonationItem?> GetPublicDetailsAsync(int id, CancellationToken cancellationToken = default) =>
+    public Task<DonationItem?> GetDetailsAsync(int id, CancellationToken cancellationToken = default) =>
         _db.DonationItems
             .AsNoTracking()
-            .Include(d => d.Category)
+            .Include(d => d.FoodCategory)
+            .Include(d => d.City)
+            .Include(d => d.Neighborhood)
             .Include(d => d.Donator)
-            .FirstOrDefaultAsync(d => d.Id == id && d.Status != DonationStatus.Cancelled, cancellationToken);
+            .Include(d => d.Images.OrderBy(i => i.SortOrder))
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
-    public Task<DonationItem?> GetOwnedAsync(int id, string donatorId, CancellationToken cancellationToken = default) =>
+    public Task<DonationItem?> GetOwnedAsync(int id, string userId, CancellationToken cancellationToken = default) =>
         _db.DonationItems
             .AsNoTracking()
-            .Include(d => d.Category)
+            .Include(d => d.FoodCategory)
+            .Include(d => d.City)
+            .Include(d => d.Neighborhood)
+            .Include(d => d.Images.OrderBy(i => i.SortOrder))
             .Include(d => d.Reservations.Where(r => r.CancelledAt == null))
                 .ThenInclude(r => r.Receiver)
-            .FirstOrDefaultAsync(d => d.Id == id && d.DonatorId == donatorId, cancellationToken);
+            .FirstOrDefaultAsync(d => d.Id == id && d.DonatorId == userId, cancellationToken);
 
-    public async Task<ServiceResult<int>> CreateAsync(string donatorId, DonationInput input, IFormFile? image, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<int>> CreateAsync(
+        string userId,
+        DonationInput input,
+        IReadOnlyList<IFormFile> images,
+        CancellationToken cancellationToken = default)
     {
-        var isDonator = await _db.Users
-            .AnyAsync(u => u.Id == donatorId && u.AccountType == AccountType.Donator, cancellationToken);
-        if (!isDonator)
-        {
-            return ServiceResult<int>.Failure(ServiceError.Forbidden, UiText.Errors.OnlyDonatorsCanDonate);
-        }
-
-        var validation = await ValidateInputAsync(input, image, cancellationToken);
+        var validation = await ValidateAsync(input, images, existingImageCount: 0, cancellationToken);
         if (validation is not null)
         {
             return ServiceResult<int>.Failure(ServiceError.Validation, validation);
         }
 
-        string? imagePath = null;
-        if (image is not null)
+        var saved = new List<string>();
+        try
         {
-            try
+            foreach (var image in images)
             {
-                imagePath = await _files.SaveImageAsync(image, cancellationToken);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                _logger.LogError(ex, "Image upload failed while creating a donation");
-                return ServiceResult<int>.Failure(ServiceError.Validation, UiText.Errors.ImageSaveFailed);
+                saved.Add(await _files.SaveImageAsync(image, cancellationToken));
             }
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "Image upload failed while creating a donation");
+            DeleteAll(saved);
+            return ServiceResult<int>.Failure(ServiceError.Validation, UiText.Errors.ImageSaveFailed);
+        }
 
+        var now = DateTime.UtcNow;
         var donation = new DonationItem
         {
             Title = input.Title.Trim(),
-            Description = input.Description.Trim(),
-            CategoryId = input.CategoryId,
-            Condition = input.Condition,
-            PickupArea = input.PickupArea.Trim(),
+            FoodCategoryId = input.FoodCategoryId,
+            ExpirationDate = input.ExpirationDate,
+            CountryId = input.CountryId,
+            CityId = input.CityId,
+            NeighborhoodId = input.NeighborhoodId,
+            PickupLocation = input.PickupLocation.Trim(),
+            PickupNotes = Normalize(input.PickupNotes),
             Status = DonationStatus.Available,
-            DonatorId = donatorId,
-            ImagePath = imagePath,
-            CreatedAt = DateTime.UtcNow
+            DonatorId = userId,
+            SafetyConfirmedAt = now,
+            CreatedAt = now
         };
+
+        for (var i = 0; i < saved.Count; i++)
+        {
+            donation.Images.Add(new DonationImage { Path = saved[i], SortOrder = i });
+        }
 
         _db.DonationItems.Add(donation);
 
@@ -148,23 +183,32 @@ public sealed class DonationService : IDonationService
         }
         catch
         {
-            _files.DeleteImage(imagePath);
+            DeleteAll(saved);
             throw;
         }
 
-        _logger.LogInformation("Donation {DonationId} created", donation.Id);
+        _logger.LogInformation("Donation {DonationId} created in city {CityId}", donation.Id, donation.CityId);
         return ServiceResult<int>.Success(donation.Id, UiText.Success.DonationPublished);
     }
 
-    public async Task<ServiceResult> UpdateAsync(int id, string donatorId, DonationInput input, IFormFile? newImage, bool removeImage, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> UpdateAsync(
+        string userId,
+        int id,
+        DonationInput input,
+        IReadOnlyList<IFormFile> newImages,
+        IReadOnlyCollection<int> removeImageIds,
+        CancellationToken cancellationToken = default)
     {
-        var donation = await _db.DonationItems.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+        var donation = await _db.DonationItems
+            .Include(d => d.Images)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
         if (donation is null)
         {
             return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.DonationNotFound);
         }
 
-        if (donation.DonatorId != donatorId)
+        if (donation.DonatorId != userId)
         {
             return ServiceResult.Failure(ServiceError.Forbidden, UiText.Errors.NotOwner);
         }
@@ -174,39 +218,55 @@ public sealed class DonationService : IDonationService
             return ServiceResult.Failure(ServiceError.InvalidState, UiText.Errors.EditNotAllowed);
         }
 
-        var validation = await ValidateInputAsync(input, newImage, cancellationToken);
+        var kept = donation.Images.Where(i => !removeImageIds.Contains(i.Id)).ToList();
+
+        var validation = await ValidateAsync(input, newImages, kept.Count, cancellationToken);
         if (validation is not null)
         {
             return ServiceResult.Failure(ServiceError.Validation, validation);
         }
 
-        var oldImage = donation.ImagePath;
-        string? savedImage = null;
-
-        if (newImage is not null)
+        var saved = new List<string>();
+        try
         {
-            try
+            foreach (var image in newImages)
             {
-                savedImage = await _files.SaveImageAsync(newImage, cancellationToken);
+                saved.Add(await _files.SaveImageAsync(image, cancellationToken));
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                _logger.LogError(ex, "Image upload failed while updating donation {DonationId}", id);
-                return ServiceResult.Failure(ServiceError.Validation, UiText.Errors.ImageSaveFailed);
-            }
-
-            donation.ImagePath = savedImage;
         }
-        else if (removeImage)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            donation.ImagePath = null;
+            _logger.LogError(ex, "Image upload failed while updating donation {DonationId}", id);
+            DeleteAll(saved);
+            return ServiceResult.Failure(ServiceError.Validation, UiText.Errors.ImageSaveFailed);
+        }
+
+        var removed = donation.Images.Where(i => removeImageIds.Contains(i.Id)).ToList();
+        foreach (var image in removed)
+        {
+            donation.Images.Remove(image);
+            _db.DonationImages.Remove(image);
+        }
+
+        foreach (var path in saved)
+        {
+            donation.Images.Add(new DonationImage { Path = path, DonationItemId = donation.Id });
+        }
+
+        var order = 0;
+        foreach (var image in kept.Concat(donation.Images.Where(i => i.Id == 0)))
+        {
+            image.SortOrder = order++;
         }
 
         donation.Title = input.Title.Trim();
-        donation.Description = input.Description.Trim();
-        donation.CategoryId = input.CategoryId;
-        donation.Condition = input.Condition;
-        donation.PickupArea = input.PickupArea.Trim();
+        donation.FoodCategoryId = input.FoodCategoryId;
+        donation.ExpirationDate = input.ExpirationDate;
+        donation.CountryId = input.CountryId;
+        donation.CityId = input.CityId;
+        donation.NeighborhoodId = input.NeighborhoodId;
+        donation.PickupLocation = input.PickupLocation.Trim();
+        donation.PickupNotes = Normalize(input.PickupNotes);
         donation.UpdatedAt = DateTime.UtcNow;
 
         try
@@ -215,21 +275,17 @@ public sealed class DonationService : IDonationService
         }
         catch (DbUpdateConcurrencyException)
         {
-            // Most likely reserved by someone while the donator was editing.
-            _files.DeleteImage(savedImage);
+            // Most likely reserved by someone while the donor was editing.
+            DeleteAll(saved);
             _logger.LogWarning("Concurrency conflict while updating donation {DonationId}", id);
             return ServiceResult.Failure(ServiceError.Conflict, UiText.Errors.EditNotAllowed);
         }
 
-        if (oldImage != donation.ImagePath)
-        {
-            _files.DeleteImage(oldImage);
-        }
-
+        DeleteAll(removed.Select(i => i.Path));
         return ServiceResult.Success(UiText.Success.DonationUpdated);
     }
 
-    public async Task<ServiceResult> CancelAsync(int id, string donatorId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> CancelAsync(int id, string userId, CancellationToken cancellationToken = default)
     {
         var donation = await _db.DonationItems.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
         if (donation is null)
@@ -237,12 +293,12 @@ public sealed class DonationService : IDonationService
             return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.DonationNotFound);
         }
 
-        if (donation.DonatorId != donatorId)
+        if (donation.DonatorId != userId)
         {
             return ServiceResult.Failure(ServiceError.Forbidden, UiText.Errors.NotOwner);
         }
 
-        if (donation.Status != DonationStatus.Available)
+        if (donation.Status is not (DonationStatus.Available or DonationStatus.Expired))
         {
             return ServiceResult.Failure(ServiceError.InvalidState, UiText.Errors.CancelNotAllowed);
         }
@@ -265,7 +321,7 @@ public sealed class DonationService : IDonationService
         return ServiceResult.Success(UiText.Success.DonationCancelled);
     }
 
-    public async Task<ServiceResult> CompleteAsync(int id, string donatorId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> CompleteAsync(int id, string userId, CancellationToken cancellationToken = default)
     {
         var donation = await _db.DonationItems
             .Include(d => d.Reservations.Where(r => r.CancelledAt == null))
@@ -276,7 +332,7 @@ public sealed class DonationService : IDonationService
             return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.DonationNotFound);
         }
 
-        if (donation.DonatorId != donatorId)
+        if (donation.DonatorId != userId)
         {
             return ServiceResult.Failure(ServiceError.Forbidden, UiText.Errors.NotOwner);
         }
@@ -296,7 +352,6 @@ public sealed class DonationService : IDonationService
         }
         catch (DbUpdateConcurrencyException)
         {
-            // e.g. the receiver cancelled at the same moment.
             _logger.LogWarning("Concurrency conflict while completing donation {DonationId}", id);
             return ServiceResult.Failure(ServiceError.Conflict, UiText.Errors.ConcurrentUpdate);
         }
@@ -305,37 +360,40 @@ public sealed class DonationService : IDonationService
         return ServiceResult.Success(UiText.Success.DonationCompleted);
     }
 
-    public async Task<DonatorDashboard> GetDashboardAsync(string donatorId, CancellationToken cancellationToken = default)
+    public async Task<UserSummary> GetSummaryAsync(string userId, CancellationToken cancellationToken = default)
     {
         var firstName = await _db.Users
-            .Where(u => u.Id == donatorId)
+            .Where(u => u.Id == userId)
             .Select(u => u.FirstName)
             .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
         var counts = await _db.DonationItems
-            .Where(d => d.DonatorId == donatorId)
+            .Where(d => d.DonatorId == userId)
             .GroupBy(d => d.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
         int CountOf(DonationStatus status) => counts.FirstOrDefault(c => c.Status == status)?.Count ?? 0;
 
-        var active = await GetMyDonationsAsync(donatorId, null, cancellationToken);
+        var activeReservations = await _db.Reservations
+            .CountAsync(
+                r => r.ReceiverId == userId && r.CancelledAt == null && r.DonationItem.Status == DonationStatus.Reserved,
+                cancellationToken);
 
-        return new DonatorDashboard(
+        return new UserSummary(
             firstName,
             CountOf(DonationStatus.Available),
             CountOf(DonationStatus.Reserved),
             CountOf(DonationStatus.Completed),
-            active);
+            activeReservations);
     }
 
-    /// <summary>
-    /// Donator's own items. When <paramref name="status"/> is null, returns active items (Available and Reserved).
-    /// </summary>
-    public async Task<IReadOnlyList<DonatorActiveItem>> GetMyDonationsAsync(string donatorId, DonationStatus? status, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<MyDonationItem>> GetMyDonationsAsync(
+        string userId,
+        DonationStatus? status,
+        CancellationToken cancellationToken = default)
     {
-        var query = _db.DonationItems.AsNoTracking().Where(d => d.DonatorId == donatorId);
+        var query = _db.DonationItems.AsNoTracking().Where(d => d.DonatorId == userId);
 
         query = status.HasValue
             ? query.Where(d => d.Status == status.Value)
@@ -343,58 +401,167 @@ public sealed class DonationService : IDonationService
 
         return await query
             .OrderByDescending(d => d.CreatedAt)
-            .Select(d => new DonatorActiveItem(
+            .ThenByDescending(d => d.Id)
+            .Select(d => new MyDonationItem(
                 d.Id,
                 d.Title,
-                d.Category.Name,
+                d.FoodCategory.Name,
+                d.ExpirationDate,
+                d.City.Name,
+                d.Neighborhood != null ? d.Neighborhood.Name : null,
+                d.PickupLocation,
                 d.Status,
-                d.ImagePath,
+                d.Images.OrderBy(i => i.SortOrder).Select(i => i.Path).FirstOrDefault(),
                 d.CreatedAt,
                 d.Reservations.Where(r => r.CancelledAt == null).Select(r => (int?)r.Id).FirstOrDefault(),
                 d.Reservations.Where(r => r.CancelledAt == null).Select(r => r.Receiver.FirstName).FirstOrDefault()))
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<DonatorHistoryItem>> GetHistoryAsync(string donatorId, DonationStatus status, CancellationToken cancellationToken = default)
+    public async Task<int> ExpireDueDonationsAsync(CancellationToken cancellationToken = default)
     {
-        var query = _db.DonationItems
-            .AsNoTracking()
-            .Where(d => d.DonatorId == donatorId && d.Status == status);
+        var today = RoDate.Today;
 
-        query = status == DonationStatus.Completed
-            ? query.OrderByDescending(d => d.CompletedAt)
-            : query.OrderByDescending(d => d.CancelledAt ?? d.UpdatedAt ?? d.CreatedAt);
-
-        return await query
-            .Select(d => new DonatorHistoryItem(
-                d.Id,
-                d.Title,
-                d.Category.Name,
-                d.Status,
-                d.Reservations.Where(r => r.CancelledAt == null)
-                    .Select(r => r.Receiver.FirstName + " " + r.Receiver.LastName).FirstOrDefault(),
-                d.Reservations.Where(r => r.CancelledAt == null)
-                    .Select(r => (DateTime?)r.ReservedAt).FirstOrDefault(),
-                d.CompletedAt,
-                d.CancelledAt,
-                d.CreatedAt))
+        var due = await _db.DonationItems
+            .Where(d => d.Status == DonationStatus.Available && d.ExpirationDate < today)
             .ToListAsync(cancellationToken);
-    }
 
-    private async Task<string?> ValidateInputAsync(DonationInput input, IFormFile? image, CancellationToken cancellationToken)
-    {
-        if (!Enum.IsDefined(input.Condition))
+        if (due.Count == 0)
         {
-            return UiText.Validation.InvalidCondition;
+            return 0;
         }
 
-        var categoryExists = await _db.Categories.AnyAsync(c => c.Id == input.CategoryId, cancellationToken);
-        if (!categoryExists)
+        var now = DateTime.UtcNow;
+        foreach (var donation in due)
+        {
+            // Expired listings are archived, never deleted.
+            donation.Status = DonationStatus.Expired;
+            donation.ExpiredAt = now;
+            donation.UpdatedAt = now;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Marked {Count} donation(s) as expired", due.Count);
+        return due.Count;
+    }
+
+    /// <summary>
+    /// Server-side gate for every write. HTML validation is a convenience only: nothing here
+    /// depends on the browser having run.
+    /// </summary>
+    private async Task<string?> ValidateAsync(
+        DonationInput input,
+        IReadOnlyList<IFormFile> images,
+        int existingImageCount,
+        CancellationToken cancellationToken)
+    {
+        // ---- Title ----
+        var title = input.Title?.Trim() ?? string.Empty;
+        if (title.Length < 3 || title.Length > FoodRules.MaxTitleLength)
+        {
+            return UiText.Validation.TitleLength;
+        }
+
+        // ---- Handover details, collected when the listing is created ----
+        var pickupLocation = input.PickupLocation?.Trim() ?? string.Empty;
+        if (pickupLocation.Length == 0)
+        {
+            return UiText.Validation.PickupLocationRequired;
+        }
+
+        if (pickupLocation.Length > FoodRules.MaxPickupLocationLength)
+        {
+            return UiText.Validation.PickupLocationLength;
+        }
+
+        var pickupNotes = Normalize(input.PickupNotes);
+        if (pickupNotes is { Length: > FoodRules.MaxPickupNotesLength })
+        {
+            return UiText.Validation.PickupNotesLength;
+        }
+
+        // ---- Category allowlist (the primary food-safety control) ----
+        var category = await _db.FoodCategories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == input.FoodCategoryId, cancellationToken);
+
+        if (category is null || !category.IsActive)
         {
             return UiText.Validation.InvalidCategory;
         }
 
-        if (image is not null)
+        if (!category.IsAllowed)
+        {
+            return UiText.Validation.CategoryNotAllowed;
+        }
+
+        // ---- Prohibited groups (secondary keyword guard) ----
+        // The free-text description is gone, so the screen reads the title and the handover notes.
+        var prohibited = ProhibitedFoodScreen.Detect(title, pickupNotes);
+        if (prohibited == ProhibitedFoodGroup.Meat)
+        {
+            return UiText.Errors.ProhibitedMeat;
+        }
+
+        if (prohibited == ProhibitedFoodGroup.Dairy)
+        {
+            return UiText.Errors.ProhibitedDairy;
+        }
+
+        // ---- Expiry (local Romanian calendar date, never UTC) ----
+        var today = RoDate.Today;
+        if (input.ExpirationDate < today)
+        {
+            return UiText.Validation.Expired;
+        }
+
+        if (input.ExpirationDate < today.AddDays(FoodRules.MinimumShelfLifeDays))
+        {
+            return UiText.Validation.ExpiresTooSoon;
+        }
+
+        if (input.ExpirationDate > today.AddYears(MaxShelfLifeYears))
+        {
+            return UiText.Validation.ExpirationTooFar;
+        }
+
+        // ---- Location ----
+        var city = await _db.Cities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.Id == input.CityId && c.CountryId == input.CountryId && c.IsActive,
+                cancellationToken);
+
+        if (city is null)
+        {
+            return UiText.Validation.InvalidLocation;
+        }
+
+        if (input.NeighborhoodId.HasValue)
+        {
+            var belongs = await _db.Neighborhoods.AnyAsync(
+                n => n.Id == input.NeighborhoodId.Value && n.CityId == input.CityId && n.IsActive,
+                cancellationToken);
+
+            if (!belongs)
+            {
+                return UiText.Validation.NeighborhoodNotInCity;
+            }
+        }
+
+        // ---- Photos ----
+        var total = existingImageCount + images.Count;
+        if (total < FoodRules.MinImages)
+        {
+            return UiText.Validation.ImagesRequired;
+        }
+
+        if (total > FoodRules.MaxImages)
+        {
+            return UiText.Validation.TooManyImages;
+        }
+
+        foreach (var image in images)
         {
             var imageError = await _files.ValidateImageAsync(image, cancellationToken);
             if (imageError is not null)
@@ -405,5 +572,16 @@ public sealed class DonationService : IDonationService
         }
 
         return null;
+    }
+
+    private static string? Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private void DeleteAll(IEnumerable<string> paths)
+    {
+        foreach (var path in paths)
+        {
+            _files.DeleteImage(path);
+        }
     }
 }

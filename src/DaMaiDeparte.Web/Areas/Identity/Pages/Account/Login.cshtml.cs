@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
 using DaMaiDeparte.Web.Resources;
 using Microsoft.AspNetCore.Identity;
@@ -11,16 +10,13 @@ namespace DaMaiDeparte.Web.Areas.Identity.Pages.Account;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
 
     public LoginModel(
         SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
         ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
-        _userManager = userManager;
         _logger = logger;
     }
 
@@ -50,7 +46,7 @@ public class LoginModel : PageModel
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return LocalRedirect(SafeReturnUrl() ?? "/");
+            return LocalRedirect(SafeReturnUrl() ?? "/Dashboard");
         }
 
         return Page();
@@ -79,16 +75,14 @@ public class LoginModel : PageModel
             return Page();
         }
 
+        // Straight to the feed. The location saved on the account is restored from the profile by
+        // LocationContext, so the user is never asked to pick it again; the dashboard only
+        // redirects to /Location if the account has no usable location at all.
         var returnUrl = SafeReturnUrl();
-        if (returnUrl is not null)
-        {
-            return LocalRedirect(returnUrl);
-        }
 
-        var user = await _userManager.FindByNameAsync(Input.Email.Trim());
-        return user?.AccountType == AccountType.Donator
-            ? RedirectToPage("/Donator/Dashboard", new { area = string.Empty })
-            : RedirectToPage("/Donations/Index", new { area = string.Empty });
+        return returnUrl is not null
+            ? LocalRedirect(returnUrl)
+            : RedirectToPage("/Dashboard", new { area = string.Empty });
     }
 
     private string? SafeReturnUrl() =>

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
 using DaMaiDeparte.Web.Resources;
+using DaMaiDeparte.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,11 +13,16 @@ public class IndexModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ILocationService _locations;
 
-    public IndexModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public IndexModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        ILocationService locations)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _locations = locations;
     }
 
     [BindProperty]
@@ -24,9 +30,10 @@ public class IndexModel : PageModel
 
     public string Email { get; private set; } = string.Empty;
 
-    public AccountType AccountType { get; private set; }
-
     public DateTime CreatedAt { get; private set; }
+
+    /// <summary>The user's home location, shown read-only; it is changed from /Location.</summary>
+    public string? PreferredLocation { get; private set; }
 
     public class InputModel
     {
@@ -54,7 +61,7 @@ public class IndexModel : PageModel
             return Challenge();
         }
 
-        Load(user);
+        await LoadAsync(user);
         Input = new InputModel
         {
             FirstName = user.FirstName,
@@ -72,7 +79,7 @@ public class IndexModel : PageModel
             return Challenge();
         }
 
-        Load(user);
+        await LoadAsync(user);
         if (!ModelState.IsValid)
         {
             return Page();
@@ -98,10 +105,12 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    private void Load(ApplicationUser user)
+    private async Task LoadAsync(ApplicationUser user)
     {
         Email = user.Email ?? string.Empty;
-        AccountType = user.AccountType;
         CreatedAt = user.CreatedAt;
+
+        var preferred = await _locations.ResolvePreferredAsync(user.Id);
+        PreferredLocation = preferred?.Display;
     }
 }

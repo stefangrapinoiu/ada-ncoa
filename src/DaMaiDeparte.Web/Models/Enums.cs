@@ -1,24 +1,23 @@
 namespace DaMaiDeparte.Web.Models;
 
-public enum AccountType
-{
-    Donator = 1,
-    Receiver = 2
-}
-
+/// <summary>
+/// Lifecycle of a food listing. There is a single user type, so the status describes the
+/// item, never the account.
+/// </summary>
 public enum DonationStatus
 {
     Available = 1,
     Reserved = 2,
     Completed = 3,
-    Cancelled = 4
+    Cancelled = 4,
+    Expired = 5
 }
 
-public enum ProductCondition
+/// <summary>Status filter shown above the dashboard feed.</summary>
+public enum FeedFilter
 {
-    New = 1,
-    LikeNew = 2,
-    Good = 3,
-    Used = 4,
-    NeedsRepair = 5
+    /// <summary>Available + Reserved (default).</summary>
+    All = 0,
+    Available = 1,
+    Reserved = 2
 }

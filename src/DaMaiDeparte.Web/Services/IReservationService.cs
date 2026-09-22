@@ -4,25 +4,28 @@ namespace DaMaiDeparte.Web.Services;
 
 public interface IReservationService
 {
-    /// <summary>Reserves an available donation for a receiver. Returns the reservation id.</summary>
-    Task<ServiceResult<int>> ReserveAsync(int donationId, string receiverId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Reserves an available, non-expired listing for a user. The same account can donate and
+    /// reserve, so the only ownership rule is that nobody may reserve their own donation.
+    /// </summary>
+    Task<ServiceResult<int>> ReserveAsync(int donationId, string userId, CancellationToken cancellationToken = default);
 
-    /// <summary>Receiver cancels their own active reservation; the donation becomes Available again.</summary>
-    Task<ServiceResult> CancelAsync(int reservationId, string receiverId, CancellationToken cancellationToken = default);
+    /// <summary>The user cancels their own active reservation; the food becomes Available again.</summary>
+    Task<ServiceResult> CancelAsync(int reservationId, string userId, CancellationToken cancellationToken = default);
 
-    /// <summary>Donator sets pickup details on an active reservation of their own donation.</summary>
+    /// <summary>The donor sets pickup details on an active reservation of their own listing.</summary>
     Task<ServiceResult> SetPickupDetailsAsync(int reservationId, string donatorId, PickupDetailsInput input, CancellationToken cancellationToken = default);
 
-    /// <summary>Reservation visible to its receiver only (includes donation, category and donator).</summary>
-    Task<Reservation?> GetForReceiverAsync(int reservationId, string receiverId, CancellationToken cancellationToken = default);
+    /// <summary>Reservation visible to the user who made it (includes donation, category and donor).</summary>
+    Task<Reservation?> GetForReceiverAsync(int reservationId, string userId, CancellationToken cancellationToken = default);
 
-    /// <summary>Reservation visible to the owning donator only (includes donation, category and receiver).</summary>
+    /// <summary>Reservation visible to the owning donor only (includes donation, category and receiver).</summary>
     Task<Reservation?> GetForDonatorAsync(int reservationId, string donatorId, CancellationToken cancellationToken = default);
 
-    /// <summary>The receiver's active reservation for a donation, if any.</summary>
-    Task<int?> GetActiveReservationIdAsync(int donationId, string receiverId, CancellationToken cancellationToken = default);
+    /// <summary>The user's active reservation for a donation, if any.</summary>
+    Task<int?> GetActiveReservationIdAsync(int donationId, string userId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ReceiverReservationItem>> GetActiveForReceiverAsync(string receiverId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<MyReservationItem>> GetActiveReservationsAsync(string userId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ReceiverReservationItem>> GetReceivedHistoryAsync(string receiverId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<MyReservationItem>> GetReceivedHistoryAsync(string userId, CancellationToken cancellationToken = default);
 }

@@ -49,6 +49,8 @@ var cookieSecurePolicy = builder.Configuration.GetValue("Security:RequireHttpsCo
     : CookieSecurePolicy.SameAsRequest;
 
 // ---------- Identity ----------
+// One account type only: no roles are assigned and no role-based policy exists. The role
+// tables stay in the schema (Identity ships them) but the application never reads them.
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -85,29 +87,47 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = cookieSecurePolicy;
 });
 
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(AppPolicies.DonatorOnly, policy => policy.RequireRole(AppRoles.Donator))
-    .AddPolicy(AppPolicies.ReceiverOnly, policy => policy.RequireRole(AppRoles.Receiver));
+// ---------- Session (active browsing location) ----------
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = "DaMaiDeparte.Session";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = cookieSecurePolicy;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true; // Required for the app to work; not used for tracking.
+    options.IdleTimeout = TimeSpan.FromHours(8);
+});
 
 // ---------- Razor Pages ----------
 builder.Services
     .AddRazorPages(options =>
     {
-        options.Conventions.AuthorizeFolder("/Donator", AppPolicies.DonatorOnly);
-        options.Conventions.AuthorizeFolder("/Receiver", AppPolicies.ReceiverOnly);
+        // Everything except the public landing page requires an account. There is a single
+        // user type, so authorization is authentication — no roles, no policies.
+        options.Conventions.AuthorizePage("/Dashboard");
+        options.Conventions.AuthorizePage("/Location");
+        options.Conventions.AuthorizeFolder("/Donations");
+        options.Conventions.AuthorizeFolder("/Reservations");
         options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
         options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
     })
     .AddMvcOptions(options => RomanianModelBindingMessages.Apply(options.ModelBindingMessageProvider));
 
 // ---------- Uploads ----------
+// Three photos per listing, so the multipart limit covers 3 × 5 MB plus form overhead.
 builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
-builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 10 * 1024 * 1024);
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 20 * 1024 * 1024);
 
 // ---------- Application services ----------
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<IBrowsingLocationStore, SessionBrowsingLocationStore>();
+builder.Services.AddScoped<ILocationContext, LocationContext>();
+builder.Services.AddHostedService<DonationExpirationWorker>();
 
 var app = builder.Build();
 
@@ -143,6 +163,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

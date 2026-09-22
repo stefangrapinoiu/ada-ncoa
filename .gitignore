@@ -8,5 +8,3 @@ src/DaMaiDeparte.Web/wwwroot/uploads/donations/*
 !src/DaMaiDeparte.Web/wwwroot/uploads/donations/.gitkeep
 TestResults/
 .env
-
-.DS_Store

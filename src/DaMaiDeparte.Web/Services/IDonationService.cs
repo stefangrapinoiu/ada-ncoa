@@ -4,28 +4,47 @@ namespace DaMaiDeparte.Web.Services;
 
 public interface IDonationService
 {
-    Task<IReadOnlyList<Category>> GetCategoriesAsync(CancellationToken cancellationToken = default);
+    /// <summary>Categories a donation may actually be published in (active + allowed).</summary>
+    Task<IReadOnlyList<FoodCategory>> GetAllowedCategoriesAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Public feed: only Available donations, filtered and paged in SQL.</summary>
-    Task<PagedResult<DonationCard>> SearchAvailableAsync(DonationSearchQuery query, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// The location-based feed. Filtered, sorted and paged in SQL: city (mandatory), optional
+    /// neighborhood, Available/Reserved only, and never anything past its expiry date.
+    /// </summary>
+    Task<PagedResult<DonationCard>> SearchFeedAsync(FeedQuery query, string currentUserId, CancellationToken cancellationToken = default);
 
-    /// <summary>Public details (Category and Donator loaded). Cancelled donations are not returned.</summary>
-    Task<DonationItem?> GetPublicDetailsAsync(int id, CancellationToken cancellationToken = default);
+    /// <summary>Full details including category, location, images and donor.</summary>
+    Task<DonationItem?> GetDetailsAsync(int id, CancellationToken cancellationToken = default);
 
-    /// <summary>Owner view including reservations and receivers. Returns null if not found or not owned.</summary>
-    Task<DonationItem?> GetOwnedAsync(int id, string donatorId, CancellationToken cancellationToken = default);
+    /// <summary>Owner view including images and the active reservation. Null if not owned.</summary>
+    Task<DonationItem?> GetOwnedAsync(int id, string userId, CancellationToken cancellationToken = default);
 
-    Task<ServiceResult<int>> CreateAsync(string donatorId, DonationInput input, IFormFile? image, CancellationToken cancellationToken = default);
+    Task<ServiceResult<int>> CreateAsync(
+        string userId,
+        DonationInput input,
+        IReadOnlyList<IFormFile> images,
+        CancellationToken cancellationToken = default);
 
-    Task<ServiceResult> UpdateAsync(int id, string donatorId, DonationInput input, IFormFile? newImage, bool removeImage, CancellationToken cancellationToken = default);
+    Task<ServiceResult> UpdateAsync(
+        string userId,
+        int id,
+        DonationInput input,
+        IReadOnlyList<IFormFile> newImages,
+        IReadOnlyCollection<int> removeImageIds,
+        CancellationToken cancellationToken = default);
 
-    Task<ServiceResult> CancelAsync(int id, string donatorId, CancellationToken cancellationToken = default);
+    Task<ServiceResult> CancelAsync(int id, string userId, CancellationToken cancellationToken = default);
 
-    Task<ServiceResult> CompleteAsync(int id, string donatorId, CancellationToken cancellationToken = default);
+    Task<ServiceResult> CompleteAsync(int id, string userId, CancellationToken cancellationToken = default);
 
-    Task<DonatorDashboard> GetDashboardAsync(string donatorId, CancellationToken cancellationToken = default);
+    Task<UserSummary> GetSummaryAsync(string userId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<DonatorActiveItem>> GetMyDonationsAsync(string donatorId, DonationStatus? status, CancellationToken cancellationToken = default);
+    /// <summary>When <paramref name="status"/> is null, returns active items (Available + Reserved).</summary>
+    Task<IReadOnlyList<MyDonationItem>> GetMyDonationsAsync(string userId, DonationStatus? status, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<DonatorHistoryItem>> GetHistoryAsync(string donatorId, DonationStatus status, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Moves every available listing whose expiry date has passed to
+    /// <see cref="DonationStatus.Expired"/>. Returns the number of rows changed.
+    /// </summary>
+    Task<int> ExpireDueDonationsAsync(CancellationToken cancellationToken = default);
 }

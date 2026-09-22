@@ -192,32 +192,6 @@ button:focus-visible,
 }
 
 /* Account type selection */
-.account-type-option .form-check-input {
-    position: absolute;
-    opacity: 0;
-}
-
-.account-type-option label {
-    display: block;
-    cursor: pointer;
-    border: 2px solid #dee2e6;
-    border-radius: var(--dmd-radius);
-    padding: 1rem 1.25rem;
-    height: 100%;
-    background: #fff;
-    transition: border-color .15s ease, background-color .15s ease;
-}
-
-.account-type-option .form-check-input:checked + label {
-    border-color: var(--dmd-green);
-    background: var(--dmd-green-soft);
-}
-
-.account-type-option .form-check-input:focus-visible + label {
-    outline: 3px solid #0a3622;
-    outline-offset: 2px;
-}
-
 .field-validation-error,
 .validation-summary-errors {
     color: #b02a37;
@@ -231,3 +205,14 @@ button:focus-visible,
     display: none;
 }
 .min-w-0 { min-width: 0; }
+
+/* ---- Food listing extras ---- */
+.location-bar {
+    border-left: 4px solid var(--dmd-green);
+}
+
+.donation-thumb-wide {
+    width: 100%;
+    height: 5.5rem;
+    object-fit: cover;
+}

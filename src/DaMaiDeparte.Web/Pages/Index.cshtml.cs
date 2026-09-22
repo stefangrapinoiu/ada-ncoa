@@ -1,22 +1,16 @@
-using DaMaiDeparte.Web.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace DaMaiDeparte.Web.Pages;
 
+/// <summary>
+/// Public landing page. The feed itself lives behind authentication because it is
+/// location-scoped, so a signed-in visitor is sent straight to their dashboard.
+/// </summary>
 public class IndexModel : PageModel
 {
-    private readonly IDonationService _donations;
-
-    public IndexModel(IDonationService donations)
-    {
-        _donations = donations;
-    }
-
-    public IReadOnlyList<DonationCard> Latest { get; private set; } = Array.Empty<DonationCard>();
-
-    public async Task OnGetAsync(CancellationToken cancellationToken)
-    {
-        var result = await _donations.SearchAvailableAsync(new DonationSearchQuery { PageSize = 4 }, cancellationToken);
-        Latest = result.Items;
-    }
+    public IActionResult OnGet() =>
+        User.Identity?.IsAuthenticated == true
+            ? RedirectToPage("/Dashboard")
+            : Page();
 }

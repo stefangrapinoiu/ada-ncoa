@@ -1,0 +1,83 @@
+@page
+@model DaMaiDeparte.Web.Pages.Reservations.IndexModel
+@{
+    ViewData["Title"] = "Rezervările mele";
+    var returnUrl = Url.Page("/Reservations/Index", new { tab = Model.Tab });
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <h1 class="h3 mb-0">Rezervările mele</h1>
+    <a class="btn btn-success" asp-page="/Dashboard"><i class="bi bi-basket" aria-hidden="true"></i> Vezi alimentele</a>
+</div>
+
+<nav aria-label="Secțiuni rezervări" class="mb-3">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link @(Model.ShowHistory ? "text-success" : "active bg-success")" asp-page="./Index">Active</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.ShowHistory ? "active bg-success" : "text-success")" asp-page="./Index" asp-route-tab="istoric">Primite</a>
+        </li>
+    </ul>
+</nav>
+
+@if (Model.Items.Count == 0)
+{
+    <partial name="_EmptyState" model="@(Model.ShowHistory ? EmptyStates.NoReceivedFood : EmptyStates.NoActiveReservations)" />
+}
+else
+{
+    <ul class="list-unstyled d-grid gap-3">
+        @foreach (var item in Model.Items)
+        {
+            <li class="card">
+                <div class="card-body d-flex flex-column flex-md-row gap-3 align-items-md-center">
+                    <div class="d-flex gap-3 align-items-center flex-grow-1 min-w-0">
+                        <partial name="_DonationImage" model='new DonationImageModel(item.ImagePath, item.Title, "donation-thumb")' />
+                        <div class="min-w-0">
+                            <h2 class="h6 mb-1 text-truncate">@item.Title</h2>
+                            <div class="small text-muted mb-1">
+                                @item.CategoryName · @DisplayExtensions.ToLocationLabel(item.CityName, item.NeighborhoodName)
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center mb-1">
+                                <span class="badge @item.ExpirationDate.ToExpiryClass()">
+                                    Expiră: @RoDate.FormatDate(item.ExpirationDate)
+                                </span>
+                                <span class="small">Oferit de: @item.DonatorFirstName</span>
+                            </div>
+                            @if (Model.ShowHistory)
+                            {
+                                <div class="small text-muted">Primit la @RoDate.FormatDate(item.CompletedAt)</div>
+                            }
+                            else
+                            {
+                                <div class="small text-muted">
+                                    Predare: @(item.MeetingLocation ?? item.PickupLocation)
+                                    @if (item.MeetingAt.HasValue)
+                                    {
+                                        <text>, @RoDate.FormatDateTime(item.MeetingAt)</text>
+                                    }
+                                    else
+                                    {
+                                        <text> (ora nu a fost stabilită)</text>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-sm btn-success" asp-page="./Details" asp-route-id="@item.ReservationId">Vezi detalii</a>
+                        @if (!Model.ShowHistory)
+                        {
+                            <form method="post" asp-page="./Details" asp-page-handler="Cancel" asp-route-id="@item.ReservationId" asp-route-returnUrl="@returnUrl"
+                                  data-confirm="@UiText.Confirm.CancelReservation" data-confirm-button="@UiText.Confirm.CancelReservationButton"
+                                  data-cancel-button="@UiText.Confirm.Back">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Anulează rezervarea</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+}

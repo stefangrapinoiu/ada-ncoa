@@ -2,8 +2,8 @@
 
 *Ultima oprire înainte de risipă.*
 
-An MVP Progressive Web App that reduces household waste by letting people give away items they no longer need.
-**Donators** publish items; **Receivers** (UI: *Beneficiari*) browse and reserve them; both arrange the pickup; the donator confirms the handover and the item is archived in both users' history.
+An MVP Progressive Web App that reduces household **food** waste by letting people give away food they will not consume in time.
+**Donators** publish food items (with a best-before date and an optional quantity); **Receivers** (UI: *Beneficiari*) browse and reserve them; both arrange the pickup; the donator confirms the handover and the item is archived in both users' history.
 
 > The user interface is **Romanian only** (`ro-RO`). Code, identifiers and technical docs are in English.
 
@@ -143,7 +143,7 @@ On Windows use `scripts/setup-dev.ps1` (set `$env:MSSQL_SA_PASSWORD`, or `$env:D
 | `FileStorage:UploadFolder` | `uploads/donations` | Image folder under `wwwroot` |
 | `FileStorage:MaxFileSizeBytes` | `5242880` (5 MB) | Max image size |
 
-Roles (`Donator`, `Receiver`) and the 11 Romanian categories are always seeded (idempotent).
+Roles (`Donator`, `Receiver`) and the 8 Romanian food categories (Lactate, Legume și fructe, Carne și pește, Conserve, Panificație, Băuturi, Dulciuri, Altele) are always seeded (idempotent).
 
 ## Seed users (Development only)
 
@@ -152,7 +152,7 @@ Roles (`Donator`, `Receiver`) and the 11 Romanian categories are always seeded (
 | `donator@example.local` | Donator | value of `Seed:DevUserPassword` (`Parola.Dev123`) |
 | `receiver@example.local` | Receiver | same |
 
-Seven sample donations in Romanian are created for the donator (Scaun de birou, Set de farfurii, Cărți pentru copii, …).
+Seven sample food donations in Romanian are created for the donator (Lapte, Mere roșii din grădină, Conserve de fasole, Pâine de casă, …), with best-before dates relative to today.
 
 ## Roles and rules
 
@@ -169,6 +169,7 @@ Seven sample donations in Romanian are created for the donator (Scaun de birou, 
 - The role is chosen at registration (*Vreau să donez produse* / *Vreau să primesc produse*) and cannot be changed in the MVP.
 - Folder-level authorization: `/Donator/*` requires `Donator`, `/Receiver/*` requires `Receiver`. Services re-check the user's account type, ownership and the current status on every write.
 - Lifecycle: `Available → Reserved → Completed`, `Available → Cancelled`, `Reserved → Available` (receiver cancels). Records are never deleted.
+- Food past its best-before date (`ExpiresOn`) never appears in the public feed, and the feed can be sorted by closest expiry.
 - Contact details (phone, e-mail) and pickup details are visible only to the two participants of an active reservation.
 
 ## Concurrency
@@ -199,7 +200,7 @@ The loser gets *„Ne pare rău, acest produs tocmai a fost rezervat de altcinev
 
 `tests/DaMaiDeparte.Tests` uses xUnit and SQLite in-memory (real transactions and the filtered unique index). Covered:
 
-- **Donations:** donator can create; receiver cannot; unknown category rejected; donator cannot edit someone else's donation; reserved items cannot be edited; cancellation archives and hides the item; search, filters, sorting and paging; dashboard counts.
+- **Donations:** donator can create; receiver cannot; unknown category rejected; expired food rejected and hidden from the feed; sorting by closest expiry; donator cannot edit someone else's donation; reserved items cannot be edited; cancellation archives and hides the item; search, filters, sorting and paging; dashboard counts.
 - **Reservations:** receiver can reserve; reserved item cannot be reserved again; stale concurrent write is rejected; database allows only one active reservation; donators cannot reserve; cancelled/missing items cannot be reserved; receiver can cancel and the item becomes available again; cannot cancel another receiver's reservation; private details only for participants; only the owner can set pickup details.
 - **Completion:** only the owner can complete; available items cannot be completed; completion archives the item, removes it from the feed and shows it in both histories; completed items can never be reserved again.
 - **Helpers:** Romanian labels, Romanian date formatting and UTC conversion, image signature detection.

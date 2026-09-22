@@ -1,4 +1,5 @@
 using DaMaiDeparte.Web.Data;
+using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
 using DaMaiDeparte.Web.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +17,8 @@ public sealed class ReservationService : IReservationService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<int>> ReserveAsync(int donationId, string receiverId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<int>> ReserveAsync(int donationId, string userId, CancellationToken cancellationToken = default)
     {
-        var isReceiver = await _db.Users
-            .AnyAsync(u => u.Id == receiverId && u.AccountType == AccountType.Receiver, cancellationToken);
-        if (!isReceiver)
-        {
-            return ServiceResult<int>.Failure(ServiceError.Forbidden, UiText.Errors.OnlyReceiversCanReserve);
-        }
-
         var strategy = _db.Database.CreateExecutionStrategy();
 
         return await strategy.ExecuteAsync(async () =>
@@ -40,21 +34,32 @@ public sealed class ReservationService : IReservationService
                 return ServiceResult<int>.Failure(ServiceError.NotFound, UiText.Errors.DonationNotFound);
             }
 
+            // A user can donate and receive with the same account, so the only ownership rule
+            // is this one. It is checked server-side, not just hidden in the UI.
+            if (donation.DonatorId == userId)
+            {
+                return ServiceResult<int>.Failure(ServiceError.Forbidden, UiText.Errors.CannotReserveOwnDonation);
+            }
+
+            if (donation.Status == DonationStatus.Expired || donation.ExpirationDate < RoDate.Today)
+            {
+                return ServiceResult<int>.Failure(ServiceError.InvalidState, UiText.Errors.DonationExpired);
+            }
+
             if (donation.Status != DonationStatus.Available)
             {
                 return ServiceResult<int>.Failure(ServiceError.InvalidState, UiText.Errors.NotAvailableForReservation);
             }
 
-            if (donation.DonatorId == receiverId)
-            {
-                return ServiceResult<int>.Failure(ServiceError.Forbidden, UiText.Errors.OnlyReceiversCanReserve);
-            }
-
             var reservation = new Reservation
             {
                 DonationItemId = donation.Id,
-                ReceiverId = receiverId,
-                ReservedAt = DateTime.UtcNow
+                ReceiverId = userId,
+                ReservedAt = DateTime.UtcNow,
+                // The donor already stated where the handover happens when publishing, so the
+                // receiver sees it immediately; only the exact time is still to be agreed.
+                MeetingLocation = donation.PickupLocation,
+                Notes = donation.PickupNotes
             };
 
             _db.Reservations.Add(reservation);
@@ -64,7 +69,7 @@ public sealed class ReservationService : IReservationService
             try
             {
                 // The concurrency token on DonationItem and the filtered unique index on
-                // Reservations(DonationItemId) guarantee only one receiver can win.
+                // Reservations(DonationItemId) guarantee only one user can win.
                 await _db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
@@ -82,14 +87,14 @@ public sealed class ReservationService : IReservationService
         });
     }
 
-    public async Task<ServiceResult> CancelAsync(int reservationId, string receiverId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> CancelAsync(int reservationId, string userId, CancellationToken cancellationToken = default)
     {
         var reservation = await _db.Reservations
             .Include(r => r.DonationItem)
             .FirstOrDefaultAsync(r => r.Id == reservationId, cancellationToken);
 
         // Do not reveal whether someone else's reservation exists.
-        if (reservation is null || reservation.ReceiverId != receiverId)
+        if (reservation is null || reservation.ReceiverId != userId)
         {
             return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.ReservationNotFound);
         }
@@ -101,7 +106,17 @@ public sealed class ReservationService : IReservationService
 
         var now = DateTime.UtcNow;
         reservation.CancelledAt = now;
-        reservation.DonationItem.Status = DonationStatus.Available;
+
+        // Food that expired while it was reserved must not go back into the feed as available.
+        reservation.DonationItem.Status = reservation.DonationItem.ExpirationDate < RoDate.Today
+            ? DonationStatus.Expired
+            : DonationStatus.Available;
+
+        if (reservation.DonationItem.Status == DonationStatus.Expired)
+        {
+            reservation.DonationItem.ExpiredAt = now;
+        }
+
         reservation.DonationItem.UpdatedAt = now;
 
         try
@@ -110,16 +125,20 @@ public sealed class ReservationService : IReservationService
         }
         catch (DbUpdateConcurrencyException)
         {
-            // e.g. the donator completed the donation at the same moment.
+            // e.g. the donor completed the donation at the same moment.
             _logger.LogWarning("Concurrency conflict while cancelling reservation {ReservationId}", reservationId);
             return ServiceResult.Failure(ServiceError.Conflict, UiText.Errors.ReservationNotActive);
         }
 
-        _logger.LogInformation("Reservation {ReservationId} cancelled by receiver", reservationId);
+        _logger.LogInformation("Reservation {ReservationId} cancelled", reservationId);
         return ServiceResult.Success(UiText.Success.ReservationCancelled);
     }
 
-    public async Task<ServiceResult> SetPickupDetailsAsync(int reservationId, string donatorId, PickupDetailsInput input, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> SetPickupDetailsAsync(
+        int reservationId,
+        string donatorId,
+        PickupDetailsInput input,
+        CancellationToken cancellationToken = default)
     {
         var reservation = await _db.Reservations
             .Include(r => r.DonationItem)
@@ -153,64 +172,66 @@ public sealed class ReservationService : IReservationService
         return ServiceResult.Success(UiText.Success.PickupSaved);
     }
 
-    public Task<Reservation?> GetForReceiverAsync(int reservationId, string receiverId, CancellationToken cancellationToken = default) =>
+    public Task<Reservation?> GetForReceiverAsync(int reservationId, string userId, CancellationToken cancellationToken = default) =>
         _db.Reservations
             .AsNoTracking()
-            .Include(r => r.DonationItem).ThenInclude(d => d.Category)
+            .Include(r => r.DonationItem).ThenInclude(d => d.FoodCategory)
+            .Include(r => r.DonationItem).ThenInclude(d => d.City)
+            .Include(r => r.DonationItem).ThenInclude(d => d.Neighborhood)
             .Include(r => r.DonationItem).ThenInclude(d => d.Donator)
-            .FirstOrDefaultAsync(r => r.Id == reservationId && r.ReceiverId == receiverId, cancellationToken);
+            .Include(r => r.DonationItem).ThenInclude(d => d.Images)
+            .FirstOrDefaultAsync(r => r.Id == reservationId && r.ReceiverId == userId, cancellationToken);
 
     public Task<Reservation?> GetForDonatorAsync(int reservationId, string donatorId, CancellationToken cancellationToken = default) =>
         _db.Reservations
             .AsNoTracking()
-            .Include(r => r.DonationItem).ThenInclude(d => d.Category)
+            .Include(r => r.DonationItem).ThenInclude(d => d.FoodCategory)
+            .Include(r => r.DonationItem).ThenInclude(d => d.City)
+            .Include(r => r.DonationItem).ThenInclude(d => d.Neighborhood)
+            .Include(r => r.DonationItem).ThenInclude(d => d.Images)
             .Include(r => r.Receiver)
             .FirstOrDefaultAsync(r => r.Id == reservationId && r.DonationItem.DonatorId == donatorId, cancellationToken);
 
-    public Task<int?> GetActiveReservationIdAsync(int donationId, string receiverId, CancellationToken cancellationToken = default) =>
+    public Task<int?> GetActiveReservationIdAsync(int donationId, string userId, CancellationToken cancellationToken = default) =>
         _db.Reservations
             .AsNoTracking()
-            .Where(r => r.DonationItemId == donationId && r.ReceiverId == receiverId && r.CancelledAt == null)
+            .Where(r => r.DonationItemId == donationId && r.ReceiverId == userId && r.CancelledAt == null)
             .Select(r => (int?)r.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<ReceiverReservationItem>> GetActiveForReceiverAsync(string receiverId, CancellationToken cancellationToken = default) =>
-        await _db.Reservations
-            .AsNoTracking()
-            .Where(r => r.ReceiverId == receiverId
-                        && r.CancelledAt == null
-                        && r.DonationItem.Status == DonationStatus.Reserved)
-            .OrderByDescending(r => r.ReservedAt)
-            .Select(r => new ReceiverReservationItem(
-                r.Id,
-                r.DonationItemId,
-                r.DonationItem.Title,
-                r.DonationItem.Category.Name,
-                r.DonationItem.ImagePath,
-                r.DonationItem.Donator.FirstName,
-                r.ReservedAt,
-                r.MeetingLocation,
-                r.MeetingAt,
-                r.DonationItem.CompletedAt))
+    public async Task<IReadOnlyList<MyReservationItem>> GetActiveReservationsAsync(string userId, CancellationToken cancellationToken = default) =>
+        await Project(_db.Reservations
+                .AsNoTracking()
+                .Where(r => r.ReceiverId == userId
+                            && r.CancelledAt == null
+                            && r.DonationItem.Status == DonationStatus.Reserved)
+                .OrderByDescending(r => r.ReservedAt))
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<ReceiverReservationItem>> GetReceivedHistoryAsync(string receiverId, CancellationToken cancellationToken = default) =>
-        await _db.Reservations
-            .AsNoTracking()
-            .Where(r => r.ReceiverId == receiverId
-                        && r.CancelledAt == null
-                        && r.DonationItem.Status == DonationStatus.Completed)
-            .OrderByDescending(r => r.DonationItem.CompletedAt)
-            .Select(r => new ReceiverReservationItem(
-                r.Id,
-                r.DonationItemId,
-                r.DonationItem.Title,
-                r.DonationItem.Category.Name,
-                r.DonationItem.ImagePath,
-                r.DonationItem.Donator.FirstName,
-                r.ReservedAt,
-                r.MeetingLocation,
-                r.MeetingAt,
-                r.DonationItem.CompletedAt))
+    public async Task<IReadOnlyList<MyReservationItem>> GetReceivedHistoryAsync(string userId, CancellationToken cancellationToken = default) =>
+        await Project(_db.Reservations
+                .AsNoTracking()
+                .Where(r => r.ReceiverId == userId
+                            && r.CancelledAt == null
+                            && r.DonationItem.Status == DonationStatus.Completed)
+                .OrderByDescending(r => r.DonationItem.CompletedAt))
             .ToListAsync(cancellationToken);
+
+    private static IQueryable<MyReservationItem> Project(IQueryable<Reservation> query) =>
+        query.Select(r => new MyReservationItem(
+            r.Id,
+            r.DonationItemId,
+            r.DonationItem.Title,
+            r.DonationItem.FoodCategory.Name,
+            r.DonationItem.ExpirationDate,
+            r.DonationItem.Images.OrderBy(i => i.SortOrder).Select(i => i.Path).FirstOrDefault(),
+            r.DonationItem.Donator.FirstName,
+            r.DonationItem.City.Name,
+            r.DonationItem.Neighborhood != null ? r.DonationItem.Neighborhood.Name : null,
+            r.DonationItem.PickupLocation,
+            r.DonationItem.PickupNotes,
+            r.ReservedAt,
+            r.MeetingLocation,
+            r.MeetingAt,
+            r.DonationItem.CompletedAt));
 }

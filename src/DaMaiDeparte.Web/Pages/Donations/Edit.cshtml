@@ -1,0 +1,28 @@
+@page "{id:int}"
+@model DaMaiDeparte.Web.Pages.Donations.EditModel
+@{
+    ViewData["Title"] = "Modifică alimentul";
+}
+
+<div class="form-card">
+    <h1 class="h3 mb-2">Modifică alimentul</h1>
+    <p class="text-muted mb-4">Poți modifica un aliment doar cât timp nu a fost rezervat.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                <partial name="_DonationFormFields" model="Model.Form" />
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check2" aria-hidden="true"></i> Salvează modificările
+                    </button>
+                    <a class="btn btn-outline-secondary btn-lg" asp-page="./Details" asp-route-id="@Model.Id">Renunță</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

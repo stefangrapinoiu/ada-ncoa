@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(ViewData["Title"] is string title && title.Length > 0 ? $"{title} – {AppInfo.Name}" : AppInfo.Name)</title>
-    <meta name="description" content="@AppInfo.Name – @AppInfo.Tagline Oferă gratuit obiectele pe care nu le mai folosești." />
+    <meta name="description" content="@AppInfo.Name – @AppInfo.Tagline Oferă alimentele ambalate pe care nu le vei consuma unei persoane din apropiere." />
     <meta name="theme-color" content="@AppInfo.ThemeColor" />
     <meta name="application-name" content="@AppInfo.ShortName" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,19 +33,16 @@
                 </button>
                 <div class="collapse navbar-collapse" id="mainNav">
                     <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link" asp-page="/Index">Acasă</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-page="/Donations/Index">Produse</a></li>
-                        @if (User.IsInRole(AppRoles.Donator))
+                        @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donator/Dashboard">Panoul meu</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donator/Donations/Index">Produsele mele</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donator/Donations/Create">Adaugă produs</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donator/History">Istoric</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Dashboard">Alimente</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Donations/Create">Adaugă un aliment</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Donations/Mine">Donațiile mele</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Reservations/Index">Rezervările mele</a></li>
                         }
-                        else if (User.IsInRole(AppRoles.Receiver))
+                        else
                         {
-                            <li class="nav-item"><a class="nav-link" asp-page="/Receiver/Dashboard">Rezervările mele</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Receiver/History">Istoric</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Index">Acasă</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav">
@@ -83,7 +80,7 @@
     <footer class="border-top bg-white py-4 mt-auto">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 text-muted small">
             <span>&copy; @DateTime.UtcNow.Year @AppInfo.Name – @AppInfo.Tagline</span>
-            <span>Mai puțină risipă. Mai mult ajutor.</span>
+            <span>Doar alimente ambalate, sigilate și în termen.</span>
         </div>
     </footer>
 
