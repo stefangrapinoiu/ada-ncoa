@@ -28,6 +28,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Reservation> Reservations => Set<Reservation>();
 
+    public DbSet<ReservationMessage> ReservationMessages => Set<ReservationMessage>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // All timestamps are stored in UTC; make sure values read back are marked as UTC.
@@ -206,6 +208,25 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasDatabaseName("IX_Reservations_DonationItemId_Active");
 
             reservation.HasIndex(r => r.ReceiverId);
+        });
+
+        builder.Entity<ReservationMessage>(message =>
+        {
+            message.Property(m => m.SenderId).IsRequired();
+            message.Property(m => m.Body).HasMaxLength(1000).IsRequired();
+
+            message.HasOne(m => m.Reservation)
+                .WithMany(r => r.Messages)
+                .HasForeignKey(m => m.ReservationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            message.HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            message.HasIndex(m => new { m.ReservationId, m.CreatedAt });
+            message.HasIndex(m => m.SenderId);
         });
     }
 

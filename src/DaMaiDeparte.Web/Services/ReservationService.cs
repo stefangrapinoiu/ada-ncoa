@@ -264,6 +264,55 @@ public sealed class ReservationService : IReservationService
                 .OrderByDescending(r => r.DonationItem.CompletedAt))
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<ReservationMessageItem>> GetMessagesAsync(int reservationId, string viewerId, CancellationToken cancellationToken = default)
+    {
+        var isParticipant = await _db.Reservations
+            .AsNoTracking()
+            .AnyAsync(r => r.Id == reservationId && (r.ReceiverId == viewerId || r.DonationItem.DonatorId == viewerId), cancellationToken);
+
+        if (!isParticipant)
+        {
+            return Array.Empty<ReservationMessageItem>();
+        }
+
+        return await _db.ReservationMessages
+            .AsNoTracking()
+            .Where(m => m.ReservationId == reservationId)
+            .OrderBy(m => m.CreatedAt)
+            .Select(m => new ReservationMessageItem(m.Id, m.Sender.FirstName, m.SenderId == viewerId, m.Body, m.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ServiceResult> SendMessageAsync(int reservationId, string senderId, string body, CancellationToken cancellationToken = default)
+    {
+        var trimmed = body.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return ServiceResult.Failure(ServiceError.Validation, UiText.Validation.MessageBodyRequired);
+        }
+
+        // Do not reveal whether someone else's reservation exists.
+        var isParticipant = await _db.Reservations
+            .AsNoTracking()
+            .AnyAsync(r => r.Id == reservationId && (r.ReceiverId == senderId || r.DonationItem.DonatorId == senderId), cancellationToken);
+
+        if (!isParticipant)
+        {
+            return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.ReservationNotFound);
+        }
+
+        _db.ReservationMessages.Add(new ReservationMessage
+        {
+            ReservationId = reservationId,
+            SenderId = senderId,
+            Body = trimmed,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return ServiceResult.Success();
+    }
+
     private static IQueryable<MyReservationItem> Project(IQueryable<Reservation> query) =>
         query.Select(r => new MyReservationItem(
             r.Id,

@@ -23,5 +23,8 @@ public class Reservation
 
     public string? Notes { get; set; }
 
+    /// <summary>The in-app message thread with the other participant for this reservation.</summary>
+    public ICollection<ReservationMessage> Messages { get; set; } = new List<ReservationMessage>();
+
     public bool IsActive => CancelledAt == null;
 }

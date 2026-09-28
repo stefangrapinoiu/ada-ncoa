@@ -38,6 +38,14 @@ public class DetailsModel : PageModel
     /// <summary>True when the current user published the food; false when they reserved it.</summary>
     public bool IsDonator { get; private set; }
 
+    /// <summary>
+    /// The in-app conversation for this reservation, oldest first — the alternative to sharing
+    /// phone numbers. Not a [BindProperty]: the send form posts a single plain field (see
+    /// OnPostSendMessageAsync) rather than binding through the page model, so it can't collide
+    /// with Input's own bound fields when only one of the two forms is actually submitted.
+    /// </summary>
+    public IReadOnlyList<ReservationMessageItem> Messages { get; private set; } = Array.Empty<ReservationMessageItem>();
+
     public bool IsActive => Reservation.CancelledAt is null && Reservation.DonationItem.Status == DonationStatus.Reserved;
 
     public bool IsCompleted => Reservation.CancelledAt is null && Reservation.DonationItem.Status == DonationStatus.Completed;
@@ -82,6 +90,8 @@ public class DetailsModel : PageModel
             MeetingTime = RoDate.ToTimeInput(Reservation.MeetingAt),
             Notes = Reservation.Notes ?? Reservation.DonationItem.PickupNotes
         };
+
+        Messages = await _reservations.GetMessagesAsync(Id, _userManager.GetUserId(User)!, cancellationToken);
 
         return Page();
     }
@@ -201,6 +211,41 @@ public class DetailsModel : PageModel
         }
 
         TempData[result.Succeeded ? TempDataKeys.Success : TempDataKeys.Error] = result.Message;
+        return RedirectToPage(new { id = Id });
+    }
+
+    /// <summary>Either participant posts a message to the reservation's thread.</summary>
+    public async Task<IActionResult> OnPostSendMessageAsync([FromForm] string? messageBody, CancellationToken cancellationToken)
+    {
+        if (!await LoadAsync(cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var body = messageBody?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            TempData[TempDataKeys.Error] = UiText.Validation.MessageBodyRequired;
+            return RedirectToPage(new { id = Id });
+        }
+
+        if (body.Length > 1000)
+        {
+            TempData[TempDataKeys.Error] = UiText.Validation.MessageBodyLength;
+            return RedirectToPage(new { id = Id });
+        }
+
+        var result = await _reservations.SendMessageAsync(Id, _userManager.GetUserId(User)!, body, cancellationToken);
+        if (!result.Succeeded && result.Error == ServiceError.NotFound)
+        {
+            return NotFound();
+        }
+
+        if (!result.Succeeded)
+        {
+            TempData[TempDataKeys.Error] = result.Message;
+        }
+
         return RedirectToPage(new { id = Id });
     }
 

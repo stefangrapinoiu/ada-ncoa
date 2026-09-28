@@ -92,3 +92,11 @@ public sealed record PickupDetailsInput(
     string MeetingLocation,
     DateTime MeetingAtUtc,
     string? Notes);
+
+/// <summary>One message in a reservation's in-app conversation, ready to render.</summary>
+public sealed record ReservationMessageItem(
+    int Id,
+    string SenderFirstName,
+    bool IsMine,
+    string Body,
+    DateTime CreatedAt);

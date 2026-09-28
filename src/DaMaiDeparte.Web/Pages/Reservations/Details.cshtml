@@ -150,6 +150,41 @@
                 </button>
             </form>
         }
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Mesaje</h2>
+                <p class="text-muted small">Coordonați predarea direct aici — numerele de telefon nu sunt afișate pe platformă.</p>
+
+                @if (Model.Messages.Count == 0)
+                {
+                    <p class="text-muted small mb-3">Niciun mesaj încă.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2 mb-3" style="max-height: 320px; overflow-y: auto;">
+                        @foreach (var message in Model.Messages)
+                        {
+                            <div class="p-2 rounded @(message.IsMine ? "bg-success bg-opacity-10 align-self-end" : "bg-light align-self-start")" style="max-width: 85%;">
+                                <div class="small text-muted mb-1">
+                                    <strong>@(message.IsMine ? "Tu" : message.SenderFirstName)</strong>
+                                    · @RoDate.FormatDateTime(message.CreatedAt)
+                                </div>
+                                <div class="text-break" style="white-space: pre-line;">@message.Body</div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <form method="post" asp-page-handler="SendMessage" asp-route-id="@Model.Id" class="d-flex gap-2">
+                    <textarea name="messageBody" class="form-control" rows="1" maxlength="1000"
+                              placeholder="Scrie un mesaj..." required></textarea>
+                    <button type="submit" class="btn btn-success flex-shrink-0">
+                        <i class="bi bi-send" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 

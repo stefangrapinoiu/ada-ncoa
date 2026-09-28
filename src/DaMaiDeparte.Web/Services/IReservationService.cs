@@ -35,4 +35,13 @@ public interface IReservationService
     Task<IReadOnlyList<MyReservationItem>> GetActiveReservationsAsync(string userId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<MyReservationItem>> GetReceivedHistoryAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The in-app message thread for a reservation, oldest first. Empty (not an error) for
+    /// anyone who isn't the donor or the receiver of that reservation.
+    /// </summary>
+    Task<IReadOnlyList<ReservationMessageItem>> GetMessagesAsync(int reservationId, string viewerId, CancellationToken cancellationToken = default);
+
+    /// <summary>Either participant (donor or receiver) posts a message to the reservation's thread.</summary>
+    Task<ServiceResult> SendMessageAsync(int reservationId, string senderId, string body, CancellationToken cancellationToken = default);
 }

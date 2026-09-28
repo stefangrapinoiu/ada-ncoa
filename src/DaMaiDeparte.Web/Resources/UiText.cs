@@ -62,6 +62,9 @@ public static class UiText
         public const string MeetingAtRequired = "Data și ora predării sunt obligatorii.";
         public const string MeetingAtInPast = "Data și ora predării trebuie să fie în viitor.";
         public const string NotesLength = "Instrucțiunile nu pot depăși 500 de caractere.";
+
+        public const string MessageBodyRequired = "Scrie un mesaj înainte de a-l trimite.";
+        public const string MessageBodyLength = "Mesajul nu poate depăși 1000 de caractere.";
     }
 
     public static class Success
