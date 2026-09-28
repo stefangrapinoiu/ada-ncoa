@@ -1,33 +1,5 @@
-:root {
-    /* Brand — from the "Ada-nCoa — PWA UI/UX" design canvas */
-    --dmd-green: #047857;
-    --dmd-green-dark: #036b4d;
-    --dmd-green-soft: #e8f7ef;
-    --dmd-accent: #f97316;
-    --dmd-ink: #111814;
-    --dmd-ink-soft: #4a5550;
-    --dmd-ink-faint: #5f6a64;
-    --dmd-border: #ecefed;
-    --dmd-surface-soft: #f1f3f2;
-    --dmd-bg: #f7f9f8;
-    --dmd-radius: 1.25rem;
-    --dmd-radius-sm: .875rem;
-    --dmd-font: 'Plus Jakarta Sans', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* Design tokens (colors, radii, fonts, Bootstrap var overrides) now live in tokens.css — loaded before this file in _Layout.cshtml. */
 
-    /* Bootstrap overrides so .btn-success / .text-success / .bg-success / badges follow the brand */
-    --bs-success: var(--dmd-green);
-    --bs-success-rgb: 4, 120, 87;
-    --bs-primary: var(--dmd-green);
-    --bs-primary-rgb: 4, 120, 87;
-    --bs-link-color: var(--dmd-green);
-    --bs-link-color-rgb: 4, 120, 87;
-    --bs-link-hover-color: var(--dmd-green-dark);
-    --bs-link-hover-color-rgb: 3, 107, 77;
-    --bs-body-font-family: var(--dmd-font);
-    --bs-border-radius: var(--dmd-radius-sm);
-    --bs-border-radius-lg: var(--dmd-radius);
-    --bs-border-radius-pill: 999px;
-}
 
 html {
     font-size: 16px;
