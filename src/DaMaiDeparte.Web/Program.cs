@@ -120,6 +120,21 @@ builder.Services
 builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
 builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 20 * 1024 * 1024);
 
+// ---------- E-mail ----------
+// No SMTP credentials exist anywhere in this repo yet. When Email:Host is set (e.g. later,
+// via user secrets or an environment variable), real e-mail is sent over SMTP; until then,
+// password-reset e-mails are just logged (see LoggingEmailSender) so the flow still works
+// end-to-end for local testing.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Email:Host"]))
+{
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
+}
+
 // ---------- Application services ----------
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
