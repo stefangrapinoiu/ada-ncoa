@@ -799,34 +799,25 @@ textarea.form-control:focus {
     color: var(--dmd-green-dark);
 }
 
-/* ---- Search field with an icon button inside it (Dashboard filters) ---- */
+/* ---- Search field with a decorative icon inside it (Dashboard filters) ---- */
 .search-field {
     position: relative;
 }
 
 .search-field .form-control {
-    padding-right: 3rem;
+    padding-left: 2.75rem;
 }
 
-.search-field-btn {
+.search-field-icon {
     position: absolute;
     top: 50%;
-    right: 6px;
+    left: 16px;
     transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    border: none;
-    background: var(--dmd-green);
-    color: #fff;
-    padding: 0;
-    flex-shrink: 0;
+    color: var(--dmd-ink-faint);
+    font-size: 1.05rem;
+    pointer-events: none;
 }
 
-.search-field-btn:hover,
-.search-field-btn:focus {
-    background: var(--dmd-green-dark);
+.search-field .form-control:focus ~ .search-field-icon {
+    color: var(--dmd-green);
 }
