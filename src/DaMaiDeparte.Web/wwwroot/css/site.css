@@ -798,3 +798,35 @@ textarea.form-control:focus {
 .wizard-review-edit:focus {
     color: var(--dmd-green-dark);
 }
+
+/* ---- Search field with an icon button inside it (Dashboard filters) ---- */
+.search-field {
+    position: relative;
+}
+
+.search-field .form-control {
+    padding-right: 3rem;
+}
+
+.search-field-btn {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: none;
+    background: var(--dmd-green);
+    color: #fff;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.search-field-btn:hover,
+.search-field-btn:focus {
+    background: var(--dmd-green-dark);
+}
