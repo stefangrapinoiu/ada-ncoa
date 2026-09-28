@@ -188,6 +188,23 @@ public class DetailsModel : PageModel
     }
 
     /// <summary>
+    /// Donor only: releases a reservation on their own listing, e.g. when the receiver stops
+    /// responding. There is no way for the donor to complete the handover otherwise, so without
+    /// this the listing would stay stuck as Reserved indefinitely.
+    /// </summary>
+    public async Task<IActionResult> OnPostReleaseAsync(CancellationToken cancellationToken)
+    {
+        var result = await _reservations.ReleaseAsync(Id, _userManager.GetUserId(User)!, cancellationToken);
+        if (!result.Succeeded && result.Error == ServiceError.NotFound)
+        {
+            return NotFound();
+        }
+
+        TempData[result.Succeeded ? TempDataKeys.Success : TempDataKeys.Error] = result.Message;
+        return RedirectToPage(new { id = Id });
+    }
+
+    /// <summary>
     /// Loads the reservation from whichever side the current user is on. Both queries filter
     /// by user id, so a third party can never load somebody else's reservation.
     /// </summary>

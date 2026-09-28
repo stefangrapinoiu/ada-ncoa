@@ -13,6 +13,13 @@ public interface IReservationService
     /// <summary>The user cancels their own active reservation; the food becomes Available again.</summary>
     Task<ServiceResult> CancelAsync(int reservationId, string userId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The donor releases a reservation on their own listing — e.g. when the receiver stops
+    /// responding. Same effect as CancelAsync (the food becomes Available again), but
+    /// authorized against the donation's owner instead of the receiver.
+    /// </summary>
+    Task<ServiceResult> ReleaseAsync(int reservationId, string donatorId, CancellationToken cancellationToken = default);
+
     /// <summary>The donor sets pickup details on an active reservation of their own listing.</summary>
     Task<ServiceResult> SetPickupDetailsAsync(int reservationId, string donatorId, PickupDetailsInput input, CancellationToken cancellationToken = default);
 

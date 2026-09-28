@@ -134,6 +134,53 @@ public sealed class ReservationService : IReservationService
         return ServiceResult.Success(UiText.Success.ReservationCancelled);
     }
 
+    public async Task<ServiceResult> ReleaseAsync(int reservationId, string donatorId, CancellationToken cancellationToken = default)
+    {
+        var reservation = await _db.Reservations
+            .Include(r => r.DonationItem)
+            .FirstOrDefaultAsync(r => r.Id == reservationId, cancellationToken);
+
+        // Do not reveal whether someone else's reservation exists.
+        if (reservation is null || reservation.DonationItem.DonatorId != donatorId)
+        {
+            return ServiceResult.Failure(ServiceError.NotFound, UiText.Errors.ReservationNotFound);
+        }
+
+        if (reservation.CancelledAt is not null || reservation.DonationItem.Status != DonationStatus.Reserved)
+        {
+            return ServiceResult.Failure(ServiceError.InvalidState, UiText.Errors.ReservationNotActive);
+        }
+
+        var now = DateTime.UtcNow;
+        reservation.CancelledAt = now;
+
+        // Food that expired while it was reserved must not go back into the feed as available.
+        reservation.DonationItem.Status = reservation.DonationItem.ExpirationDate < RoDate.Today
+            ? DonationStatus.Expired
+            : DonationStatus.Available;
+
+        if (reservation.DonationItem.Status == DonationStatus.Expired)
+        {
+            reservation.DonationItem.ExpiredAt = now;
+        }
+
+        reservation.DonationItem.UpdatedAt = now;
+
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // e.g. the receiver cancelled at the same moment.
+            _logger.LogWarning("Concurrency conflict while releasing reservation {ReservationId}", reservationId);
+            return ServiceResult.Failure(ServiceError.Conflict, UiText.Errors.ReservationNotActive);
+        }
+
+        _logger.LogInformation("Reservation {ReservationId} released by donor", reservationId);
+        return ServiceResult.Success(UiText.Success.ReservationReleased);
+    }
+
     public async Task<ServiceResult> SetPickupDetailsAsync(
         int reservationId,
         string donatorId,

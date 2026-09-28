@@ -72,6 +72,7 @@ public static class UiText
         public const string DonationCompleted = "Donația a fost finalizată. Mulțumim că ai salvat acest aliment de la risipă!";
         public const string ReservationCreated = "Alimentul a fost rezervat cu succes.";
         public const string ReservationCancelled = "Rezervarea a fost anulată.";
+        public const string ReservationReleased = "Rezervarea a fost anulată, iar alimentul este din nou disponibil.";
         public const string PickupSaved = "Detaliile predării au fost salvate.";
         public const string LocationChanged = "Locația a fost actualizată.";
         public const string DefaultLocationSaved = "Locația a fost salvată în profilul tău.";
@@ -166,6 +167,8 @@ public static class UiText
         public const string CancelDonationButton = "Da, anulează donația";
         public const string CancelReservation = "Ești sigur că vrei să anulezi această rezervare? Alimentul va deveni din nou disponibil pentru alte persoane.";
         public const string CancelReservationButton = "Da, anulează rezervarea";
+        public const string ReleaseReservation = "Ești sigur că vrei să anulezi această rezervare? Folosește această opțiune dacă persoana care a rezervat nu mai răspunde. Alimentul va deveni din nou disponibil pentru alte persoane.";
+        public const string ReleaseReservationButton = "Da, anulează rezervarea";
         public const string CompleteDonation = "Confirmi că alimentul a fost predat? După confirmare, donația va fi finalizată și nu va mai apărea în lista alimentelor disponibile.";
         public const string CompleteDonationButton = "Da, finalizează donația";
         public const string Back = "Înapoi";
