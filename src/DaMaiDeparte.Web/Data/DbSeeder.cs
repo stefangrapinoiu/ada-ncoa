@@ -1,7 +1,9 @@
 using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
+using DaMaiDeparte.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DaMaiDeparte.Web.Data;
 
@@ -508,7 +510,15 @@ public static class DbSeeder
                 return;
             }
 
-            await SeedSampleDataAsync(db, provider.GetRequiredService<UserManager<ApplicationUser>>(), password, logger);
+            var environment = provider.GetRequiredService<IWebHostEnvironment>();
+            var fileOptions = provider.GetRequiredService<IOptions<FileStorageOptions>>().Value;
+            await SeedSampleDataAsync(
+                db,
+                provider.GetRequiredService<UserManager<ApplicationUser>>(),
+                environment,
+                fileOptions,
+                password,
+                logger);
         }
     }
 
@@ -633,24 +643,12 @@ public static class DbSeeder
     private static async Task SeedSampleDataAsync(
         ApplicationDbContext db,
         UserManager<ApplicationUser> userManager,
+        IWebHostEnvironment environment,
+        FileStorageOptions fileOptions,
         string password,
         ILogger logger)
     {
-        var cluj = await db.Cities.FirstOrDefaultAsync(c => c.Slug == "cluj-napoca");
-        if (cluj is null)
-        {
-            return;
-        }
-
-        var marasti = await db.Neighborhoods.FirstOrDefaultAsync(n => n.CityId == cluj.Id && n.Name == "Mărăști");
-        var gheorgheni = await db.Neighborhoods.FirstOrDefaultAsync(n => n.CityId == cluj.Id && n.Name == "Gheorgheni");
-
-        var ioana = await EnsureUserAsync(userManager, DevUserOneEmail, "Ioana", "Popescu", "0722000111",
-            cluj.CountryId, cluj.Id, marasti?.Id, password, logger);
-        await EnsureUserAsync(userManager, DevUserTwoEmail, "Andrei", "Ionescu", "0733000222",
-            cluj.CountryId, cluj.Id, gheorgheni?.Id, password, logger);
-
-        if (ioana is null || await db.DonationItems.AnyAsync())
+        if (await db.DonationItems.AnyAsync())
         {
             return;
         }
@@ -659,54 +657,216 @@ public static class DbSeeder
             .Where(c => c.IsAllowed)
             .ToDictionaryAsync(c => c.Key, c => c.Id);
 
-        var now = DateTime.UtcNow;
-        var today = RoDate.Today;
-
-        var samples = new (string Title, string CategoryKey, int ExpiresInDays, int? NeighborhoodId, string PickupLocation, string? PickupNotes)[]
+        // Five cities (all of them already have street-level neighborhoods seeded above), each
+        // with a donor/receiver pair who reserve and complete each other's listings, so every
+        // dashboard tab, "Donațiile mele" tab and "Rezervările mele" tab has something to show
+        // straight after a fresh reset-app.command run.
+        var cityDefinitions = new (string CitySlug, (string Email, string First, string Last, string Phone, string? Neighborhood)[] Users)[]
         {
-            ("Pâine integrală feliată", "PackagedBakery", 5, marasti?.Id,
-                "Stația de tramvai Mărăști", "Zilnic după ora 18:00."),
-            ("Paste penne integrale 500 g", "PackagedPantry", 240, marasti?.Id,
-                "Intrarea Iulius Mall, dinspre Bulevardul 21 Decembrie", null),
-            ("Suc natural de mere 1 l", "PackagedBeverages", 90, gheorgheni?.Id,
-                "Parcul Iuliu Hațieganu, intrarea principală", "Weekend, între 10:00 și 14:00."),
-            ("Mere ambalate 1 kg", "PackagedProduce", 8, gheorgheni?.Id,
-                "Piața Mihai Viteazu, lângă intrare", null),
-            ("Batoane cu ovăz și fructe", "PackagedSnacks", 120, null,
-                "Piața Unirii, lângă statuia lui Matei Corvin", "Pot lăsa pachetul și la birou, în centru."),
-            ("Orez cu bob lung 1 kg", "PackagedPantry", 400, marasti?.Id,
-                "Stația de autobuz Aurel Vlaicu", null),
-            ("Biscuiți digestivi", "PackagedBakery", 60, null,
-                "Gara Cluj-Napoca, intrarea principală", "Doar în timpul săptămânii, dimineața.")
+            ("cluj-napoca", new[]
+            {
+                (DevUserOneEmail, "Ioana", "Popescu", "0722000111", (string?)"Mărăști"),
+                (DevUserTwoEmail, "Andrei", "Ionescu", "0733000222", (string?)"Gheorgheni")
+            }),
+            ("bucuresti", new[]
+            {
+                ("maria@example.local", "Maria", "Dumitru", "0722111222", (string?)"Sector 2"),
+                ("alex@example.local", "Alex", "Stan", "0733222333", (string?)"Sector 3")
+            }),
+            ("timisoara", new[]
+            {
+                ("diana@example.local", "Diana", "Pop", "0722333444", (string?)"Iosefin"),
+                ("bogdan@example.local", "Bogdan", "Radu", "0733444555", (string?)"Fabric")
+            }),
+            ("iasi", new[]
+            {
+                ("elena@example.local", "Elena", "Munteanu", "0722555666", (string?)"Copou"),
+                ("cristian@example.local", "Cristian", "Vasile", "0733666777", (string?)"Tătărași")
+            }),
+            ("brasov", new[]
+            {
+                ("andreea@example.local", "Andreea", "Marin", "0722777888", (string?)"Astra"),
+                ("florin@example.local", "Florin", "Toma", "0733888999", (string?)"Racadau")
+            })
         };
 
-        var index = 0;
-        foreach (var (title, categoryKey, expiresInDays, neighborhoodId, pickupLocation, pickupNotes) in samples)
+        var now = DateTime.UtcNow;
+        var today = RoDate.Today;
+        var donationIndex = 0;
+        var citiesSeeded = 0;
+
+        foreach (var (citySlug, userDefs) in cityDefinitions)
         {
-            if (!categories.TryGetValue(categoryKey, out var categoryId))
+            var city = await db.Cities.FirstOrDefaultAsync(c => c.Slug == citySlug);
+            if (city is null)
             {
                 continue;
             }
 
-            db.DonationItems.Add(new DonationItem
+            var neighborhoods = await db.Neighborhoods
+                .Where(n => n.CityId == city.Id)
+                .ToDictionaryAsync(n => n.Name, n => n.Id);
+
+            var users = new ApplicationUser?[userDefs.Length];
+            for (var i = 0; i < userDefs.Length; i++)
             {
-                Title = title,
-                FoodCategoryId = categoryId,
-                ExpirationDate = today.AddDays(expiresInDays),
-                CountryId = cluj.CountryId,
-                CityId = cluj.Id,
-                NeighborhoodId = neighborhoodId,
-                PickupLocation = pickupLocation,
-                PickupNotes = pickupNotes,
-                Status = DonationStatus.Available,
-                DonatorId = ioana.Id,
-                SafetyConfirmedAt = now,
-                CreatedAt = now.AddHours(-(++index * 5))
-            });
+                var (email, first, last, phone, neighborhoodName) = userDefs[i];
+                int? neighborhoodId = neighborhoodName is not null && neighborhoods.TryGetValue(neighborhoodName, out var nId)
+                    ? nId
+                    : null;
+
+                users[i] = await EnsureUserAsync(userManager, email, first, last, phone,
+                    city.CountryId, city.Id, neighborhoodId, password, logger);
+            }
+
+            if (users.Length < 2 || users[0] is null || users[1] is null)
+            {
+                continue;
+            }
+
+            var donor = users[0]!;
+            var partner = users[1]!;
+            int? DonorNeighborhood() => userDefs[0].Neighborhood is { } n1 && neighborhoods.TryGetValue(n1, out var id1) ? id1 : null;
+            int? PartnerNeighborhood() => userDefs[1].Neighborhood is { } n2 && neighborhoods.TryGetValue(n2, out var id2) ? id2 : null;
+
+            // Every status a donation can be in, and every combination the "Donațiile mele" /
+            // "Rezervările mele" tabs filter on, appears at least once per city.
+            var seeds = new (string Title, string CategoryKey, int ExpiresInDays, int? NeighborhoodId,
+                string PickupLocation, string? PickupNotes, DonationStatus Status, string? ImageFile,
+                ApplicationUser Donor, ApplicationUser? Receiver)[]
+            {
+                ("Pâine integrală feliată", "PackagedBakery", 5, DonorNeighborhood(),
+                    "Stația de transport din apropiere", "Zilnic după ora 18:00.",
+                    DonationStatus.Available, "seed-paine.jpg", donor, null),
+                ("Paste penne integrale 500 g", "PackagedPantry", 240, DonorNeighborhood(),
+                    "Intrarea principală a blocului", null,
+                    DonationStatus.Reserved, "seed-paste.jpg", donor, partner),
+                ("Suc natural de mere 1 l", "PackagedBeverages", 90, DonorNeighborhood(),
+                    "Parcul din apropiere, la intrarea principală", "Weekend, între 10:00 și 14:00.",
+                    DonationStatus.Completed, "seed-suc.jpg", donor, partner),
+                ("Roșii cherry la caserolă 500 g", "PackagedProduce", 7, PartnerNeighborhood(),
+                    "Piața din centru, lângă intrare", null,
+                    DonationStatus.Available, "seed-rosii.jpg", partner, null),
+                ("Hummus clasic 200 g", "OtherApproved", 10, PartnerNeighborhood(),
+                    "Zona centrală, lângă stația de metrou/tramvai", "Poate fi lăsat și la recepție.",
+                    DonationStatus.Available, "seed-hummus.jpg", partner, null),
+                ("Biscuiți digestivi", "PackagedBakery", -2, PartnerNeighborhood(),
+                    "Gara, intrarea principală", "Doar în timpul săptămânii, dimineața.",
+                    DonationStatus.Expired, "seed-biscuiti.jpg", partner, null),
+                ("Batoane cu ovăz și fructe", "PackagedSnacks", 120, null,
+                    "Zona centrală, lângă statuie", "Pot lăsa pachetul și la birou.",
+                    DonationStatus.Cancelled, "seed-batoane.jpg", partner, null),
+                ("Tofu natural 200 g", "PackagedPantry", 14, DonorNeighborhood(),
+                    "Punct de întâlnire în centru", null,
+                    DonationStatus.Available, "seed-tofu.jpg", donor, null),
+                ("Orez cu bob lung 1 kg", "PackagedPantry", 400, DonorNeighborhood(),
+                    "Stația de autobuz din apropiere", null,
+                    DonationStatus.Available, "seed-orez.jpg", donor, null),
+                ("Piure de mere pentru bebeluși", "PackagedBabyFood", 180, PartnerNeighborhood(),
+                    "Farmacia din cartier, la intrare", "Sunați înainte de a veni.",
+                    DonationStatus.Available, "seed-piure-bebe.jpg", partner, null),
+                ("Băutură de ovăz 1 l", "PackagedBeverages", 60, DonorNeighborhood(),
+                    "Magazinul de cartier, la intrare", null,
+                    DonationStatus.Available, "seed-bautura-ovaz.jpg", donor, null),
+                ("Mere ambalate 1 kg", "PackagedProduce", 6, PartnerNeighborhood(),
+                    "Piața din apropiere, lângă intrare", null,
+                    DonationStatus.Reserved, "seed-mere.jpg", partner, donor)
+            };
+
+            foreach (var seed in seeds)
+            {
+                if (!categories.TryGetValue(seed.CategoryKey, out var categoryId))
+                {
+                    continue;
+                }
+
+                donationIndex++;
+                var createdAt = now.AddHours(-(donationIndex * 3));
+
+                var item = new DonationItem
+                {
+                    Title = seed.Title,
+                    FoodCategoryId = categoryId,
+                    ExpirationDate = today.AddDays(seed.ExpiresInDays),
+                    CountryId = city.CountryId,
+                    CityId = city.Id,
+                    NeighborhoodId = seed.NeighborhoodId,
+                    PickupLocation = seed.PickupLocation,
+                    PickupNotes = seed.PickupNotes,
+                    Status = seed.Status,
+                    DonatorId = seed.Donor.Id,
+                    SafetyConfirmedAt = createdAt,
+                    CreatedAt = createdAt
+                };
+
+                switch (seed.Status)
+                {
+                    case DonationStatus.Completed:
+                        item.CompletedAt = createdAt.AddDays(1);
+                        break;
+                    case DonationStatus.Cancelled:
+                        item.CancelledAt = createdAt.AddHours(6);
+                        break;
+                    case DonationStatus.Expired:
+                        item.ExpiredAt = now;
+                        break;
+                }
+
+                if (seed.ImageFile is not null)
+                {
+                    var imagePath = CopySeedImage(environment, fileOptions, seed.ImageFile);
+                    if (imagePath is not null)
+                    {
+                        item.Images.Add(new DonationImage { Path = imagePath, SortOrder = 0 });
+                    }
+                }
+
+                if (seed.Receiver is not null && (seed.Status == DonationStatus.Reserved || seed.Status == DonationStatus.Completed))
+                {
+                    item.Reservations.Add(new Reservation
+                    {
+                        ReceiverId = seed.Receiver.Id,
+                        ReservedAt = createdAt.AddHours(2),
+                        MeetingLocation = seed.PickupLocation,
+                        MeetingAt = seed.Status == DonationStatus.Completed ? item.CompletedAt : createdAt.AddDays(1)
+                    });
+                }
+
+                db.DonationItems.Add(item);
+            }
+
+            citiesSeeded++;
         }
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Sample food donations seeded");
+        logger.LogInformation("Sample food donations seeded across {CityCount} cities", citiesSeeded);
+    }
+
+    /// <summary>
+    /// Copies a demo photo shipped under wwwroot/seed-images/donations (checked into git, unlike
+    /// real uploads) into the live upload folder under a fresh random name, exactly like a real
+    /// upload would land there. Returns null if the demo asset is missing so seeding never fails
+    /// because of it.
+    /// </summary>
+    private static string? CopySeedImage(IWebHostEnvironment environment, FileStorageOptions fileOptions, string sourceFileName)
+    {
+        var sourcePath = Path.Combine(environment.WebRootPath, "seed-images", "donations", sourceFileName);
+        if (!File.Exists(sourcePath))
+        {
+            return null;
+        }
+
+        var folder = fileOptions.UploadFolder.Trim('/').Replace('\\', '/');
+        var physicalFolder = Path.Combine(environment.WebRootPath, folder.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(physicalFolder);
+
+        var extension = Path.GetExtension(sourceFileName);
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var physicalPath = Path.Combine(physicalFolder, fileName);
+
+        File.Copy(sourcePath, physicalPath, overwrite: false);
+
+        return $"{folder}/{fileName}";
     }
 
     private static async Task<ApplicationUser?> EnsureUserAsync(
