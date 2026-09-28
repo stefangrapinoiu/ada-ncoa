@@ -112,6 +112,13 @@
                                         <i class="bi bi-check2-circle" aria-hidden="true"></i> Confirmă predarea
                                     </button>
                                 </form>
+                                <form method="post" asp-page-handler="ReleaseReservation" asp-route-id="@d.Id" asp-route-reservationId="@reservation.Id"
+                                      data-confirm="@UiText.Confirm.ReleaseReservation" data-confirm-button="@UiText.Confirm.ReleaseReservationButton"
+                                      data-cancel-button="@UiText.Confirm.Back">
+                                    <button type="submit" class="btn btn-outline-danger w-100">
+                                        <i class="bi bi-x-circle" aria-hidden="true"></i> Anulează rezervarea
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

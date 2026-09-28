@@ -107,6 +107,17 @@ public class DetailsModel : PageModel
         return HandleOwnerResult(result, returnUrl);
     }
 
+    /// <summary>
+    /// Donor only: releases the active reservation on this listing (e.g. the receiver stopped
+    /// responding), same action as the "Anulează rezervarea" button on Reservations/Details —
+    /// duplicated here too since this is the page donors land on first.
+    /// </summary>
+    public async Task<IActionResult> OnPostReleaseReservationAsync(int reservationId, string? returnUrl, CancellationToken cancellationToken)
+    {
+        var result = await _reservations.ReleaseAsync(reservationId, _userManager.GetUserId(User)!, cancellationToken);
+        return HandleOwnerResult(result, returnUrl);
+    }
+
     private IActionResult HandleOwnerResult(ServiceResult result, string? returnUrl)
     {
         if (!result.Succeeded && result.Error is ServiceError.NotFound or ServiceError.Forbidden)
