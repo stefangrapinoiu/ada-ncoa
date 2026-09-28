@@ -1,0 +1,132 @@
+@* Wizard version of the shared donation form fields, used only by Create.cshtml.
+   Same Input.* bindings as _DonationFormFields (Edit.cshtml keeps using that one,
+   single-page) — this partial only reorganizes the same fields into three
+   <div data-wizard-step> sections that donation-wizard.js shows one at a time.
+   Every field still posts in the same single <form>, so Create.cshtml.cs's
+   OnPostAsync needs no changes. *@
+@model DonationFormViewModel
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div data-wizard-step="1" class="wizard-step">
+    <p class="wizard-step-intro">Publică rapid un aliment pe care nu îl vei consuma și oferă-l unei persoane din apropiere.</p>
+
+    <div class="wizard-note" role="note">
+        <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+        <div>
+            <strong>@UiText.Food.OnlyFood</strong>
+            <div class="small mt-1">@UiText.Food.PackagedOnly</div>
+            <div class="small">@UiText.Food.NoMeatNoDairy</div>
+        </div>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="Input.Images" class="form-label">Selectează fotografiile</label>
+        <input asp-for="Input.Images" type="file" class="form-control" multiple required
+               accept="image/jpeg,image/png,image/webp"
+               data-image-input data-preview-container="imagePreviews" data-max-files="@FoodRules.MaxImages" />
+        <div class="form-text">
+            Minimum o fotografie, maximum @FoodRules.MaxImages. Le poți selecta pe toate dintr-o singură dată.
+            Asigură-te că produsul și data expirării sunt vizibile. JPG, PNG sau WebP, maximum 5 MB fiecare.
+        </div>
+        <span asp-validation-for="Input.Images" class="small"></span>
+    </div>
+
+    <div id="imagePreviews" class="row row-cols-3 g-2 mt-2" aria-live="polite"></div>
+
+    <div class="wizard-actions">
+        <button type="button" class="btn btn-success btn-lg w-100" data-wizard-next>Continuă</button>
+    </div>
+</div>
+
+<div data-wizard-step="2" class="wizard-step">
+    <div class="mb-3">
+        <label asp-for="Input.Title" class="form-label"></label>
+        <input asp-for="Input.Title" class="form-control" placeholder="Ex: Pâine integrală feliată"
+               maxlength="100" autocomplete="off" />
+        <span asp-validation-for="Input.Title" class="small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.FoodCategoryId" class="form-label"></label>
+        <select asp-for="Input.FoodCategoryId" class="form-select">
+            <option value="">Alege o categorie</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id" selected="@(category.Id == Model.Input.FoodCategoryId)">@category.Name</option>
+            }
+        </select>
+        <div class="form-text">Sunt disponibile doar categoriile de alimente aprobate. Fără lactate, carne sau pește.</div>
+        <span asp-validation-for="Input.FoodCategoryId" class="small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.ExpirationDate" class="form-label">@UiText.Food.ExpirationLabel</label>
+        <input asp-for="Input.ExpirationDate" type="text" class="form-control"
+               placeholder="@RoDate.DatePlaceholder" inputmode="numeric" maxlength="10"
+               autocomplete="off" data-date-input data-min-date="@Model.MinExpirationDate" />
+        <div class="form-text">
+            Format: @RoDate.DatePlaceholder (zi/lună/an). @UiText.Food.ExpirationHelp
+            @UiText.Food.MinimumShelfLife Cea mai apropiată dată acceptată: @Model.MinExpirationDate.
+        </div>
+        <span asp-validation-for="Input.ExpirationDate" class="small"></span>
+    </div>
+
+    <fieldset class="mb-3">
+        <legend class="form-label fs-6 mb-2">Unde se află alimentul</legend>
+        <partial name="_LocationFields" model="Model.Picker" />
+    </fieldset>
+
+    <fieldset class="mb-3">
+        <legend class="form-label fs-6 mb-2">@UiText.Food.PickupTitle</legend>
+        <div class="mb-3">
+            <label asp-for="Input.PickupLocation" class="form-label">@UiText.Food.PickupLocationLabel</label>
+            <input asp-for="Input.PickupLocation" class="form-control" maxlength="200" autocomplete="off"
+                   placeholder="Ex: Intrarea principală Iulius Mall" />
+            <div class="form-text">@UiText.Food.PickupLocationHelp</div>
+            <span asp-validation-for="Input.PickupLocation" class="small"></span>
+        </div>
+        <div class="mb-0">
+            <label asp-for="Input.PickupNotes" class="form-label">@UiText.Food.PickupNotesLabel</label>
+            <textarea asp-for="Input.PickupNotes" class="form-control" rows="2" maxlength="500"
+                      placeholder="Ex: zilnic după ora 18:00"></textarea>
+            <div class="form-text">@UiText.Food.PickupNotesHelp</div>
+            <span asp-validation-for="Input.PickupNotes" class="small"></span>
+        </div>
+    </fieldset>
+
+    <fieldset class="mb-2">
+        <legend class="form-label fs-6 mb-2">Confirmări obligatorii</legend>
+        <label class="wizard-check" for="confirmPackaging">
+            <input asp-for="Input.ConfirmPackaging" id="confirmPackaging" required />
+            <span>@UiText.Food.ConfirmPackaging</span>
+        </label>
+        <span asp-validation-for="Input.ConfirmPackaging" class="small d-block mb-2"></span>
+        <label class="wizard-check" for="confirmNoMeatDairy">
+            <input asp-for="Input.ConfirmNoMeatDairy" id="confirmNoMeatDairy" required />
+            <span>@UiText.Food.ConfirmNoMeatDairy</span>
+        </label>
+        <span asp-validation-for="Input.ConfirmNoMeatDairy" class="small d-block mb-2"></span>
+        <label class="wizard-check" for="confirmExpiryVisible">
+            <input asp-for="Input.ConfirmExpiryVisible" id="confirmExpiryVisible" required />
+            <span>@UiText.Food.ConfirmExpiryVisible</span>
+        </label>
+        <span asp-validation-for="Input.ConfirmExpiryVisible" class="small d-block"></span>
+    </fieldset>
+
+    <div class="wizard-actions two">
+        <button type="button" class="btn-chip" data-wizard-back>Înapoi</button>
+        <button type="button" class="btn btn-success btn-lg flex-grow-1" data-wizard-next>Continuă</button>
+    </div>
+</div>
+
+<div data-wizard-step="3" class="wizard-step">
+    <div class="wizard-review-card" data-wizard-summary></div>
+    <p class="small text-muted">Anunțul devine vizibil pentru cei care caută în zona ta. Anunțurile care nu respectă regulile pot fi retrase.</p>
+
+    <div class="wizard-actions two">
+        <button type="button" class="btn-chip" data-wizard-back>Înapoi</button>
+        <button type="submit" class="btn btn-success btn-lg flex-grow-1">
+            <i class="bi bi-send" aria-hidden="true"></i> Publică alimentul
+        </button>
+    </div>
+</div>
