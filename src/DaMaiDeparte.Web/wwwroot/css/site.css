@@ -799,25 +799,3 @@ textarea.form-control:focus {
     color: var(--dmd-green-dark);
 }
 
-/* ---- Search field with a decorative icon inside it (Dashboard filters) ---- */
-.search-field {
-    position: relative;
-}
-
-.search-field .form-control {
-    padding-left: 2.75rem;
-}
-
-.search-field-icon {
-    position: absolute;
-    top: 50%;
-    left: 16px;
-    transform: translateY(-50%);
-    color: var(--dmd-ink-faint);
-    font-size: 1.05rem;
-    pointer-events: none;
-}
-
-.search-field .form-control:focus ~ .search-field-icon {
-    color: var(--dmd-green);
-}
