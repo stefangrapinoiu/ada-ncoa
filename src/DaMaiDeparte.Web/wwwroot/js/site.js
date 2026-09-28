@@ -79,6 +79,13 @@
     });
 
     // ---- Photo previews for the single multi-select file field ----
+    // Reopening the OS file picker on the SAME <input> replaces its whole selection instead of
+    // adding to it (that's native browser behavior, not something `multiple` changes) — so
+    // picking photos one at a time used to leave only the last one selected. This keeps its own
+    // running list across change events and writes the merged set back into input.files (via
+    // DataTransfer) before the form is ever submitted, so photos picked in separate dialog
+    // openings all make it into the upload. Each preview also gets a small remove button, since
+    // without one a wrong pick could only be undone by reloading the whole form.
     document.querySelectorAll('[data-image-input]').forEach(function (input) {
         var container = document.getElementById(input.dataset.previewContainer);
         if (!container) {
@@ -86,36 +93,72 @@
         }
 
         var maxFiles = parseInt(input.dataset.maxFiles, 10) || 3;
+        var selectedFiles = [];
 
-        input.addEventListener('change', function () {
+        function sameFile(a, b) {
+            return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+        }
+
+        function syncInputFiles() {
+            var dataTransfer = new DataTransfer();
+            selectedFiles.forEach(function (file) { dataTransfer.items.add(file); });
+            input.files = dataTransfer.files;
+        }
+
+        function renderPreviews(overflow) {
             container.innerHTML = '';
 
-            var files = Array.prototype.slice.call(input.files || []);
-            if (files.length === 0) {
-                return;
-            }
-
-            if (files.length > maxFiles) {
+            if (overflow) {
                 var warning = document.createElement('div');
                 warning.className = 'col-12 small text-danger';
-                warning.textContent = 'Ai selectat ' + files.length + ' fotografii. Poți adăuga cel mult ' + maxFiles + '.';
+                warning.textContent = 'Poți adăuga cel mult ' + maxFiles + ' fotografii; restul nu au fost adăugate.';
                 container.appendChild(warning);
             }
 
-            files.slice(0, maxFiles).forEach(function (file, index) {
+            selectedFiles.forEach(function (file, index) {
                 var col = document.createElement('div');
-                col.className = 'col';
+                col.className = 'col position-relative';
 
                 var img = document.createElement('img');
                 img.className = 'img-fluid rounded donation-thumb-wide';
                 img.alt = 'Previzualizare fotografia ' + (index + 1);
                 col.appendChild(img);
+
+                var remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'btn-close bg-white rounded-circle position-absolute top-0 end-0 m-1 p-1';
+                remove.setAttribute('aria-label', 'Elimină fotografia ' + (index + 1));
+                remove.addEventListener('click', function () {
+                    selectedFiles.splice(index, 1);
+                    syncInputFiles();
+                    renderPreviews(false);
+                });
+                col.appendChild(remove);
+
                 container.appendChild(col);
 
                 var reader = new FileReader();
                 reader.onload = function (e) { img.src = e.target.result; };
                 reader.readAsDataURL(file);
             });
+        }
+
+        input.addEventListener('change', function () {
+            var incoming = Array.prototype.slice.call(input.files || []);
+            var overflow = false;
+
+            incoming.forEach(function (file) {
+                if (selectedFiles.length >= maxFiles) {
+                    overflow = true;
+                    return;
+                }
+                if (!selectedFiles.some(function (existing) { return sameFile(existing, file); })) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            syncInputFiles();
+            renderPreviews(overflow);
         });
     });
 
