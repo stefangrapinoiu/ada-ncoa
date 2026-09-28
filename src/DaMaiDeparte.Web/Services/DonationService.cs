@@ -68,7 +68,11 @@ public sealed class DonationService : IDonationService
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var term = query.Search.Trim();
-            donations = donations.Where(d => d.Title.Contains(term));
+
+            // Romanian_100_CI_AI is case- AND accent-insensitive, so typing "paine" still
+            // matches "Pâine integrală" — the default column collation is accent-sensitive,
+            // which is why a plain Contains() would have missed it.
+            donations = donations.Where(d => EF.Functions.Collate(d.Title, "Romanian_100_CI_AI").Contains(term));
         }
 
         donations = donations
