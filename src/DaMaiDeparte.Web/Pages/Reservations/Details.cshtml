@@ -31,18 +31,10 @@
             @if (Model.IsDonator)
             {
                 <div><dt>Rezervat de</dt><dd>@r.Receiver.FirstName</dd></div>
-                @if (!string.IsNullOrWhiteSpace(r.Receiver.PhoneNumber))
-                {
-                    <div><dt>Telefon</dt><dd>@r.Receiver.PhoneNumber</dd></div>
-                }
             }
             else
             {
                 <div><dt>Oferit de</dt><dd>@d.Donator.FirstName</dd></div>
-                @if (!string.IsNullOrWhiteSpace(d.Donator.PhoneNumber))
-                {
-                    <div><dt>Telefon</dt><dd>@d.Donator.PhoneNumber</dd></div>
-                }
             }
         </dl>
 
