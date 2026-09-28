@@ -10,6 +10,18 @@ public sealed class DonationService : IDonationService
 {
     private const int MaxPageSize = 48;
 
+    /// <summary>
+    /// Lowercases and strips Romanian diacritics, so a search term matches regardless of case
+    /// or diacritics. Must mirror the Replace chain applied to Title in SearchFeedAsync exactly
+    /// — this one runs in C# against the typed search term, that one is EF-translated to SQL and
+    /// runs against the Title column, and the two need to fold to the same plain-ASCII result.
+    /// </summary>
+    private static string FoldDiacritics(string value) =>
+        value.ToLowerInvariant()
+            .Replace("ă", "a").Replace("â", "a").Replace("î", "i")
+            .Replace("ș", "s").Replace("ş", "s")
+            .Replace("ț", "t").Replace("ţ", "t");
+
     /// <summary>Sanity bound: a best-before date more than five years out is almost certainly a typo.</summary>
     private const int MaxShelfLifeYears = 5;
 
@@ -67,12 +79,19 @@ public sealed class DonationService : IDonationService
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var term = query.Search.Trim();
+            var term = FoldDiacritics(query.Search.Trim());
 
-            // Romanian_100_CI_AI is case- AND accent-insensitive, so typing "paine" still
-            // matches "Pâine integrală" — the default column collation is accent-sensitive,
-            // which is why a plain Contains() would have missed it.
-            donations = donations.Where(d => EF.Functions.Collate(d.Title, "Romanian_100_CI_AI").Contains(term));
+            // Fold both sides down to plain lowercase ASCII (no ă/â/î/ș/ț) instead of trusting a
+            // named SQL Server collation's accent-folding rules — this chain is EF-translatable
+            // (ToLower -> LOWER, each Replace -> REPLACE) so it still runs as one SQL query, but
+            // its behavior only depends on the character substitutions written out below, not on
+            // collation internals. Must mirror FoldDiacritics() exactly.
+            donations = donations.Where(d =>
+                d.Title.ToLower()
+                    .Replace("ă", "a").Replace("â", "a").Replace("î", "i")
+                    .Replace("ș", "s").Replace("ş", "s")
+                    .Replace("ț", "t").Replace("ţ", "t")
+                    .Contains(term));
         }
 
         donations = donations
