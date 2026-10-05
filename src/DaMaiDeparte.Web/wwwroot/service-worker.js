@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
     '/css/site.css',
     '/js/site.js',
     '/js/donation-wizard.js',
+    '/js/reservation-chat.js',
     '/manifest.webmanifest',
     '/images/icons/icon-192.png',
     '/images/icons/icon-512.png',

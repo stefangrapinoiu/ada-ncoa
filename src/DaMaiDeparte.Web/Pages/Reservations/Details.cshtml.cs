@@ -214,6 +214,31 @@ public class DetailsModel : PageModel
         return RedirectToPage(new { id = Id });
     }
 
+    /// <summary>
+    /// Polled from the client every few seconds (see the script in Details.cshtml) so new
+    /// messages from the other participant show up without a manual page refresh. Returns the
+    /// full thread rather than only-what's-new: GetMessagesAsync already filters to participants
+    /// only, thread lengths here are small (a handful of pickup-coordination messages), and the
+    /// client just diffs by message id, so there is no need for an "after this id" query.
+    /// </summary>
+    public async Task<IActionResult> OnGetMessagesAsync(CancellationToken cancellationToken)
+    {
+        if (!await LoadAsync(cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var messages = await _reservations.GetMessagesAsync(Id, _userManager.GetUserId(User)!, cancellationToken);
+        return new JsonResult(messages.Select(m => new
+        {
+            id = m.Id,
+            isMine = m.IsMine,
+            senderName = m.IsMine ? "Tu" : m.SenderFirstName,
+            body = m.Body,
+            createdAtDisplay = RoDate.FormatDateTime(m.CreatedAt)
+        }));
+    }
+
     /// <summary>Either participant posts a message to the reservation's thread.</summary>
     public async Task<IActionResult> OnPostSendMessageAsync([FromForm] string? messageBody, CancellationToken cancellationToken)
     {
