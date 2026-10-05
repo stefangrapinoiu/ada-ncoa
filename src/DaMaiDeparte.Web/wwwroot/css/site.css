@@ -340,19 +340,26 @@ button:focus-visible,
     bottom: 0;
     z-index: 1030;
     display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
+    align-items: center;
     padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, .98);
     border-top: 1px solid var(--dmd-border);
 }
 
-.bottom-nav .bottom-nav-link {
+/* Four equal-width columns (the three links plus the FAB's slot) so the raised "+" button
+   always lands dead center between its neighbors, regardless of viewport width — fixed pixel
+   widths plus space-around drifted off-center depending on how much free space there was. */
+.bottom-nav .bottom-nav-link,
+.bottom-nav .bottom-nav-fab-slot {
+    flex: 1 1 0;
     display: flex;
+    justify-content: center;
+}
+
+.bottom-nav .bottom-nav-link {
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    width: 72px;
     text-decoration: none;
     color: var(--dmd-ink-faint);
     font-size: 11px;
