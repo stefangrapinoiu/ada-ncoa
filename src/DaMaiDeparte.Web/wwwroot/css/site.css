@@ -340,7 +340,11 @@ button:focus-visible,
     bottom: 0;
     z-index: 1030;
     display: flex;
-    align-items: center;
+    /* Bottom-anchor every item instead of centering the row: the FAB (56px) is taller than a
+       link's icon+label block (~42px), so centering left extra empty space underneath it
+       compared to the links. Flush bottoms mean the FAB's extra height only pokes upward,
+       which is the raised look we want, with nothing looking randomly offset. */
+    align-items: flex-end;
     padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, .98);
     border-top: 1px solid var(--dmd-border);
@@ -381,7 +385,6 @@ button:focus-visible,
     justify-content: center;
     width: 56px;
     height: 56px;
-    margin-top: -18px;
     border-radius: 999px;
     background: var(--dmd-green);
     color: #fff;
