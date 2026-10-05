@@ -115,6 +115,7 @@ public sealed class DonationService : IDonationService
                 d.PickupLocation,
                 d.Status,
                 d.Images.OrderBy(i => i.SortOrder).Select(i => i.Path).FirstOrDefault(),
+                d.Images.Count,
                 d.CreatedAt,
                 d.DonatorId == currentUserId))
             .ToListAsync(cancellationToken);

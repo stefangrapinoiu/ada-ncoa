@@ -46,6 +46,7 @@ public sealed record DonationCard(
     string PickupLocation,
     DonationStatus Status,
     string? ImagePath,
+    int ImageCount,
     DateTime CreatedAt,
     bool IsOwn);
 

@@ -179,7 +179,7 @@
                 <form method="post" asp-page-handler="SendMessage" asp-route-id="@Model.Id" class="d-flex gap-2">
                     <textarea name="messageBody" class="form-control" rows="1" maxlength="1000"
                               placeholder="Scrie un mesaj..." required></textarea>
-                    <button type="submit" class="btn btn-success flex-shrink-0">
+                    <button type="submit" class="btn btn-success flex-shrink-0" aria-label="Trimite mesajul">
                         <i class="bi bi-send" aria-hidden="true"></i>
                     </button>
                 </form>
