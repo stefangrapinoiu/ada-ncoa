@@ -341,4 +341,66 @@
             });
         });
     }
+
+    // ---- "Install app" button (Chrome/Edge/Android/desktop) ----
+    var deferredInstallPrompt = null;
+    var installBtn = document.getElementById('pwaInstallBtn');
+
+    window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        if (installBtn) {
+            installBtn.classList.remove('d-none');
+        }
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener('click', function () {
+            if (!deferredInstallPrompt) {
+                return;
+            }
+            installBtn.classList.add('d-none');
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.finally(function () {
+                deferredInstallPrompt = null;
+            });
+        });
+    }
+
+    window.addEventListener('appinstalled', function () {
+        if (installBtn) {
+            installBtn.classList.add('d-none');
+        }
+        deferredInstallPrompt = null;
+    });
+
+    // ---- iOS "Add to Home Screen" tip (Safari has no install prompt API) ----
+    var iosTip = document.getElementById('iosInstallTip');
+    if (iosTip) {
+        var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        var isStandalone = window.navigator.standalone === true ||
+            window.matchMedia('(display-mode: standalone)').matches;
+        var dismissed = false;
+        try {
+            dismissed = window.localStorage.getItem('adancoa-ios-install-tip-dismissed') === '1';
+        } catch (e) {
+            dismissed = false;
+        }
+
+        if (isIos && !isStandalone && !dismissed) {
+            iosTip.classList.remove('d-none');
+        }
+
+        var iosTipClose = document.getElementById('iosInstallTipClose');
+        if (iosTipClose) {
+            iosTipClose.addEventListener('click', function () {
+                iosTip.classList.add('d-none');
+                try {
+                    window.localStorage.setItem('adancoa-ios-install-tip-dismissed', '1');
+                } catch (e) {
+                    // Ignore storage errors (e.g. private browsing).
+                }
+            });
+        }
+    }
 })();

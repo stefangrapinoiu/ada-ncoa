@@ -55,7 +55,12 @@
                             <li class="nav-item"><a class="nav-link" asp-page="/Index">Acasă</a></li>
                         }
                     </ul>
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav align-items-lg-center">
+                        <li class="nav-item">
+                            <button type="button" id="pwaInstallBtn" class="btn btn-outline-success btn-sm d-none ms-lg-2">
+                                <i class="bi bi-download" aria-hidden="true"></i> Instalează aplicația
+                            </button>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
@@ -106,5 +111,14 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/ro.js" crossorigin="anonymous"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <div id="iosInstallTip" class="alert alert-success d-none fixed-bottom m-3 shadow-sm d-flex align-items-center justify-content-between gap-3" role="status">
+        <span>
+            Instalează Ada-nCoa pe ecranul principal: apasă
+            <i class="bi bi-box-arrow-up" aria-hidden="true"></i> (Distribuie), apoi
+            „Adaugă pe ecranul principal”.
+        </span>
+        <button type="button" id="iosInstallTipClose" class="btn-close" aria-label="Închide"></button>
+    </div>
 </body>
 </html>
