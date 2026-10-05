@@ -112,8 +112,13 @@ builder.Services
         options.Conventions.AuthorizeFolder("/Reservations");
         options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
         options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
+        options.Conventions.AuthorizePage("/Legal/AcceptareTermeni");
     })
-    .AddMvcOptions(options => RomanianModelBindingMessages.Apply(options.ModelBindingMessageProvider));
+    .AddMvcOptions(options =>
+    {
+        RomanianModelBindingMessages.Apply(options.ModelBindingMessageProvider);
+        options.Filters.Add<RequireTermsAcceptedFilter>();
+    });
 
 // ---------- Uploads ----------
 // Three photos per listing, so the multipart limit covers 3 × 5 MB plus form overhead.

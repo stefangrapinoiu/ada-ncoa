@@ -14,6 +14,15 @@ public class ApplicationUser : IdentityUser
 
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>When the user ticked the GDPR consent checkbox at registration. Always set once the
+    /// account exists (the checkbox is required), kept nullable only because older seeded/test
+    /// accounts predate this field.</summary>
+    public DateTime? GdprConsentAt { get; set; }
+
+    /// <summary>When the user accepted the Terms and Conditions. Null means they haven't yet — the
+    /// next page they request redirects them to the acceptance screen (see RequireTermsAcceptedFilter).</summary>
+    public DateTime? TermsAcceptedAt { get; set; }
+
     // ----- Preferred ("home") location -----
     // This is the location stored on the profile. It is only a default: the location the
     // user is currently browsing lives in the session and can differ (see BrowsingLocation).
