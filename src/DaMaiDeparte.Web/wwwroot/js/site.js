@@ -339,15 +339,62 @@
     // toolbars animate in/out during scroll. We track the real visible area ourselves via the
     // visualViewport API and nudge the nav up by the gap, so it stays glued to the bottom of
     // whatever is actually on screen instead of the logical viewport iOS reports.
+    // Temporary diagnostics (remove once the iOS bottom-nav jumps are understood):
+    //   ?navdebug=1  shows a small live readout of the viewport numbers at the top of the screen
+    //   ?navfix=off  disables the visualViewport compensation below, for an A/B comparison
+    //   ?navdebug=0 / ?navfix=on  switch them back off. Both stick for the tab via sessionStorage,
+    //   since the app's own links drop the query string.
+    var navDiag = { debug: false, fixOff: false };
+    try {
+        var navParams = new URLSearchParams(window.location.search);
+        if (navParams.has('navdebug')) {
+            window.sessionStorage.setItem('adancoa-navdebug', navParams.get('navdebug') === '1' ? '1' : '0');
+        }
+        if (navParams.has('navfix')) {
+            window.sessionStorage.setItem('adancoa-navfix-off', navParams.get('navfix') === 'off' ? '1' : '0');
+        }
+        navDiag.debug = window.sessionStorage.getItem('adancoa-navdebug') === '1';
+        navDiag.fixOff = window.sessionStorage.getItem('adancoa-navfix-off') === '1';
+    } catch (e) {
+        // sessionStorage unavailable: diagnostics simply stay off.
+    }
+
     var bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav && window.visualViewport) {
         var vv = window.visualViewport;
+        var navStats = { maxGap: 0, lifts: 0, lifted: false };
+        var navReadout = null;
+        if (navDiag.debug) {
+            navReadout = document.createElement('div');
+            navReadout.setAttribute('aria-hidden', 'true');
+            navReadout.style.cssText = 'position:fixed;top:56px;left:6px;z-index:2000;pointer-events:none;' +
+                'background:rgba(0,0,0,.75);color:#fff;font:11px/1.35 ui-monospace,Menlo,monospace;' +
+                'padding:4px 6px;border-radius:6px;white-space:pre;';
+            document.body.appendChild(navReadout);
+        }
+
         var repositionBottomNav = function () {
             var gap = window.innerHeight - (vv.height + vv.offsetTop);
-            bottomNav.style.transform = gap > 0.5 ? 'translateY(-' + gap + 'px)' : '';
+            var applied = !navDiag.fixOff && gap > 0.5;
+            bottomNav.style.transform = applied ? 'translateY(-' + gap + 'px)' : '';
+
+            if (navReadout) {
+                if (applied && !navStats.lifted) { navStats.lifts++; }
+                navStats.lifted = applied;
+                if (gap > navStats.maxGap) { navStats.maxGap = gap; }
+                var rect = bottomNav.getBoundingClientRect();
+                navReadout.textContent =
+                    'fix: ' + (navDiag.fixOff ? 'OFF' : 'on') +
+                    '\ninnerH ' + window.innerHeight + '  vvH ' + vv.height.toFixed(1) + '  vvTop ' + vv.offsetTop.toFixed(1) +
+                    '\ngap ' + gap.toFixed(1) + '  max ' + navStats.maxGap.toFixed(1) + '  lifts ' + navStats.lifts +
+                    '\nnav bottom ' + rect.bottom.toFixed(1) + '  scrollY ' + Math.round(window.scrollY);
+            }
         };
         vv.addEventListener('resize', repositionBottomNav);
         vv.addEventListener('scroll', repositionBottomNav);
+        window.addEventListener('scroll', function () {
+            if (navReadout) { window.requestAnimationFrame(repositionBottomNav); }
+        }, { passive: true });
         window.addEventListener('orientationchange', repositionBottomNav);
         repositionBottomNav();
     }

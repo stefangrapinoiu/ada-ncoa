@@ -3,7 +3,7 @@
 //  - static assets (css/js/icons, CDN libraries): cache-first;
 //  - page navigations: network-first, falling back to the offline page;
 //  - dynamic donation data and uploaded images are NOT cached aggressively.
-const VERSION = 'v18';
+const VERSION = 'v19';
 const STATIC_CACHE = `dmd-static-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
