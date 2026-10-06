@@ -20,7 +20,9 @@ services:
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-DaMai_Departe2026!}"
       MSSQL_PID: "Developer"
     ports:
-      - "1433:1433"                # lets VS Code / database tools connect from your Mac
+      # 127.0.0.1 only: database tools on the same machine can still connect (e.g. from your Mac
+      # when running locally), but the database is never reachable from the internet.
+      - "127.0.0.1:1433:1433"
     volumes:
       - damaideparte-sql-data:/var/opt/mssql
     healthcheck:
@@ -45,7 +47,9 @@ services:
       Database__SeedSampleData: "true"
       Security__RequireHttpsCookies: "false"  # the container serves plain http://localhost
     ports:
-      - "8080:8080"
+      # 127.0.0.1 only: on the server, Caddy (HTTPS) proxies to this port from the same machine,
+      # so the app is never served over plain HTTP to the internet. Locally, http://localhost:8080 still works.
+      - "127.0.0.1:8080:8080"
     volumes:
       - damaideparte-uploads:/app/wwwroot/uploads/donations
     restart: unless-stopped
