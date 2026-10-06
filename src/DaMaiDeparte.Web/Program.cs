@@ -4,8 +4,10 @@ using System.Text.Unicode;
 using DaMaiDeparte.Web.Data;
 using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
+using DaMaiDeparte.Web.Monitoring;
 using DaMaiDeparte.Web.Services;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.StaticFiles;
@@ -111,6 +113,8 @@ builder.Services
         options.Conventions.AuthorizeFolder("/Donations");
         options.Conventions.AuthorizeFolder("/Reservations");
         options.Conventions.AuthorizeFolder("/Notificari");
+        // Hidden admin panel: 404 for everyone who is not an admin (see AdminOnlyFilter).
+        options.Conventions.AddFolderApplicationModelConvention("/Admin", model => model.Filters.Add(new AdminOnlyFilter()));
         options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
         options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
         options.Conventions.AuthorizePage("/Legal/AcceptareTermeni");
@@ -146,6 +150,20 @@ builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLog, AuditLog>();
+
+// Behind Caddy: take the real client IP / scheme from X-Forwarded-*. Safe to trust any proxy
+// because the app's port is bound to 127.0.0.1 only (docker-compose.yml), so only Caddy can
+// reach it, and Caddy itself ignores client-sent X-Forwarded-For.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownProxies.Clear();
+#pragma warning disable CS0618, ASPDEPR005 // KnownNetworks is obsolete in .NET 10 but still has to be cleared
+    options.KnownNetworks.Clear();
+#pragma warning restore CS0618, ASPDEPR005
+});
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IBrowsingLocationStore, SessionBrowsingLocationStore>();
 builder.Services.AddScoped<ILocationContext, LocationContext>();
@@ -154,6 +172,8 @@ builder.Services.AddHostedService<DonationExpirationWorker>();
 var app = builder.Build();
 
 // ---------- Pipeline ----------
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -192,6 +212,14 @@ app.UseAuthorization();
 app.MapRazorPages();
 
 await DbSeeder.InitializeAsync(app.Services, app.Configuration);
+
+// `dotnet DaMaiDeparte.Web.dll --grant-admin <email>` / `--revoke-admin <email>`: run and exit.
+if (await AdminCommands.TryRunAsync(app.Services, args, Console.Out) is int exitCode)
+{
+    Environment.ExitCode = exitCode;
+    return;
+}
+
 
 app.Run();
 

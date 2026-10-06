@@ -30,6 +30,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ReservationMessage> ReservationMessages => Set<ReservationMessage>();
 
+    /// <summary>Security log for the admin panel (see AuditLog).</summary>
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // All timestamps are stored in UTC; make sure values read back are marked as UTC.
@@ -227,6 +230,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             message.HasIndex(m => new { m.ReservationId, m.CreatedAt });
             message.HasIndex(m => m.SenderId);
+        });
+
+        builder.Entity<AuditEvent>(audit =>
+        {
+            audit.Property(a => a.Type).HasConversion<string>().HasMaxLength(32);
+            audit.Property(a => a.DeviceType).HasConversion<string>().HasMaxLength(16);
+            audit.Property(a => a.UserId).HasMaxLength(450);
+            audit.Property(a => a.Email).HasMaxLength(256);
+            audit.Property(a => a.IpAddress).HasMaxLength(45);
+            audit.Property(a => a.UserAgent).HasMaxLength(300);
+            audit.Property(a => a.Details).HasMaxLength(500);
+
+            audit.HasIndex(a => a.OccurredAt);
+            audit.HasIndex(a => new { a.Type, a.OccurredAt });
+            audit.HasIndex(a => new { a.IpAddress, a.OccurredAt });
+            audit.HasIndex(a => a.UserId);
         });
     }
 

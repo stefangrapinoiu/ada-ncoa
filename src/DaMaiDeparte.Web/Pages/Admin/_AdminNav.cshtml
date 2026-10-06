@@ -1,0 +1,12 @@
+@{
+    var current = ViewContext.RouteData.Values["page"] as string ?? "";
+    string Css(string page) => string.Equals(current, page, StringComparison.OrdinalIgnoreCase) ? "btn-success" : "btn-outline-success";
+}
+<div class="d-flex align-items-center gap-2 mb-2">
+    <span class="badge rounded-pill text-bg-light border"><i class="bi bi-shield-lock" aria-hidden="true"></i> Panou admin</span>
+</div>
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Secțiuni panou admin">
+    <a class="btn btn-sm rounded-pill @Css("/Admin/Index")" asp-page="/Admin/Index">Prezentare</a>
+    <a class="btn btn-sm rounded-pill @Css("/Admin/Securitate")" asp-page="/Admin/Securitate">Siguranță</a>
+    <a class="btn btn-sm rounded-pill @Css("/Admin/Utilizatori")" asp-page="/Admin/Utilizatori">Utilizatori</a>
+</nav>

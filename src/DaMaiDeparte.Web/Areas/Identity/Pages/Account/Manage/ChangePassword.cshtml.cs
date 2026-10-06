@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
+using DaMaiDeparte.Web.Monitoring;
 using DaMaiDeparte.Web.Resources;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,13 @@ public class ChangePasswordModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IAuditLog _audit;
 
-    public ChangePasswordModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public ChangePasswordModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IAuditLog audit)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _audit = audit;
     }
 
     [BindProperty]
@@ -71,6 +74,7 @@ public class ChangePasswordModel : PageModel
         }
 
         await _signInManager.RefreshSignInAsync(user);
+        await _audit.WriteAsync(AuditEventType.PasswordChanged, user.Id, user.Email);
         TempData[TempDataKeys.Success] = UiText.Success.PasswordChanged;
         return RedirectToPage("./Index");
     }
