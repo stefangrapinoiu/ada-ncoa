@@ -403,4 +403,24 @@
             });
         }
     }
+
+    // ---- Work around iOS Safari/Chrome mispainting `position: fixed` elements ----
+    // On first load, iOS Safari (and iOS Chrome, which uses the same engine) paints
+    // fixed-position elements — our bottom nav — using a stale viewport size from
+    // before its own toolbar has finished settling. The nav then floats in the wrong
+    // spot until the user scrolls or taps something, which forces Safari to
+    // recalculate. It never happens in the installed (standalone) PWA, because there
+    // is no browser toolbar to settle. Nudging the scroll position by a pixel and
+    // immediately back forces that recalculation right after load, before anyone
+    // notices — a long-standing, widely-used workaround for this exact WebKit bug.
+    if (/iphone|ipad|ipod/i.test(window.navigator.userAgent)) {
+        var nudgeFixedLayout = function () {
+            window.scrollTo(0, 1);
+            window.requestAnimationFrame(function () {
+                window.scrollTo(0, 0);
+            });
+        };
+        window.addEventListener('load', nudgeFixedLayout);
+        window.addEventListener('pageshow', nudgeFixedLayout);
+    }
 })();
