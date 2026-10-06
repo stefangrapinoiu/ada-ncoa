@@ -56,6 +56,10 @@
                             <li class="nav-item"><a class="nav-link" asp-page="/Donations/Create">Adaugă un aliment</a></li>
                             <li class="nav-item"><a class="nav-link" asp-page="/Donations/Mine">Donațiile mele</a></li>
                             <li class="nav-item"><a class="nav-link" asp-page="/Reservations/Index">Rezervările mele</a></li>
+                            @if (User.IsInRole(AdminRole.Name))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Admin/Index"><i class="bi bi-shield-lock" aria-hidden="true"></i> Panou admin</a></li>
+                            }
                         }
                         else
                         {

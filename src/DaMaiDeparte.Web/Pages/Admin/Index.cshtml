@@ -1,0 +1,66 @@
+@page
+@model DaMaiDeparte.Web.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Panou admin";
+}
+
+<partial name="_AdminNav" />
+
+<h1 class="h3 mb-1">Prezentare generală</h1>
+<p class="text-muted mb-3">Cum e folosită aplicația, pe scurt. Autentificările se numără de la activarea panoului.</p>
+
+@if (Model.SuspiciousIps.Count > 0 || Model.Lockouts24h > 0)
+{
+    <div class="alert alert-danger d-flex gap-2 align-items-start" role="alert">
+        <i class="bi bi-exclamation-octagon-fill fs-5" aria-hidden="true"></i>
+        <div>
+            <strong>Atenție:</strong>
+            @if (Model.SuspiciousIps.Count > 0)
+            {
+                <span>@Model.SuspiciousIps.Count IP-uri cu @IndexModel.SuspiciousFailureThreshold+ parole greșite în ultimele 24h.</span>
+            }
+            @if (Model.Lockouts24h > 0)
+            {
+                <span>@Model.Lockouts24h conturi blocate în ultimele 24h.</span>
+            }
+            <a class="alert-link" asp-page="/Admin/Securitate">Vezi în Siguranță →</a>
+        </div>
+    </div>
+}
+
+<h2 class="h6 text-muted text-uppercase mt-3">Utilizatori</h2>
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body p-3">
+        <div class="small text-muted">Total</div><div class="fs-3 fw-bold">@Model.TotalUsers</div>
+        <div class="small text-muted">noi: <strong class="text-success">+@Model.NewUsers7</strong> în 7 zile · +@Model.NewUsers30 în 30</div>
+    </div></div></div>
+    <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body p-3">
+        <div class="small text-muted">Autentificați azi</div><div class="fs-3 fw-bold">@Model.SignedInToday</div>
+        <div class="small text-muted">7 zile: @Model.SignedIn7 · 30 zile: @Model.SignedIn30</div>
+    </div></div></div>
+    <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body p-3">
+        <div class="small text-muted">Autentificări eșuate (24h)</div><div class="fs-3 fw-bold @(Model.FailedLogins24h > 0 ? "text-danger" : "")">@Model.FailedLogins24h</div>
+        <div class="small text-muted">conturi blocate: @Model.Lockouts24h</div>
+    </div></div></div>
+    <div class="col-6 col-md-3"><div class="card h-100 text-bg-success"><div class="card-body p-3">
+        <div class="small">Alimente salvate</div><div class="fs-3 fw-bold">@Model.HandedOver</div>
+        <div class="small">predate, de la lansare</div>
+    </div></div></div>
+</div>
+
+<h2 class="h6 text-muted text-uppercase mt-4">Anunțuri (de la lansare)</h2>
+<div class="card mb-3"><div class="card-body">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <tbody>
+                <tr><th scope="row">Publicate</th><td class="text-end fw-bold">@Model.Published</td><td class="text-end text-muted">100%</td></tr>
+                <tr><th scope="row">Disponibile acum</th><td class="text-end">@Model.Available</td><td class="text-end text-muted">@IndexModel.Percent(Model.Available, Model.Published)</td></tr>
+                <tr><th scope="row">Rezervate acum</th><td class="text-end">@Model.Reserved</td><td class="text-end text-muted">@IndexModel.Percent(Model.Reserved, Model.Published)</td></tr>
+                <tr><th scope="row"><i class="bi bi-check2-circle text-success" aria-hidden="true"></i> Predate</th><td class="text-end fw-bold text-success">@Model.HandedOver</td><td class="text-end text-muted">@IndexModel.Percent(Model.HandedOver, Model.Published)</td></tr>
+                <tr><th scope="row"><i class="bi bi-hourglass-bottom text-warning" aria-hidden="true"></i> Expirate nepreluate</th><td class="text-end">@Model.Expired</td><td class="text-end text-muted">@IndexModel.Percent(Model.Expired, Model.Published)</td></tr>
+                <tr><th scope="row"><i class="bi bi-x-circle text-muted" aria-hidden="true"></i> Anulate</th><td class="text-end">@Model.Cancelled</td><td class="text-end text-muted">@IndexModel.Percent(Model.Cancelled, Model.Published)</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="small text-muted mt-2">Rezervări în total: @Model.Reservations · mesaje în total: @Model.Messages</div>
+</div></div>

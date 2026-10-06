@@ -1,0 +1,72 @@
+@page
+@model DaMaiDeparte.Web.Pages.Admin.UtilizatoriModel
+@{
+    ViewData["Title"] = "Utilizatori – Panou admin";
+}
+
+<partial name="_AdminNav" />
+
+<h1 class="h3 mb-1">Utilizatori</h1>
+<p class="text-muted mb-3">Cine s-a înregistrat, cine s-a logat și când. Ultima autentificare apare de la activarea panoului.</p>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-6">
+        <input class="form-control form-control-sm" name="q" value="@Model.Search" placeholder="Caută după nume sau e-mail" aria-label="Caută după nume sau e-mail" />
+    </div>
+    <div class="col-8 col-md-3">
+        <select class="form-select form-select-sm" name="ordine" aria-label="Ordine">
+            <option value="logare" selected="@(Model.Sort != "nou")">Ultima autentificare</option>
+            <option value="nou" selected="@(Model.Sort == "nou")">Cei mai noi</option>
+        </select>
+    </div>
+    <div class="col-4 col-md-3">
+        <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-search" aria-hidden="true"></i> Caută</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Nume</th><th>Înregistrat</th><th>Ultima autentificare</th><th class="text-end">Anunțuri</th><th class="text-end">Rezervări</th></tr></thead>
+                <tbody>
+                    @foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@u.Name</strong>
+                                <div class="small text-muted text-break">@u.Email</div>
+                            </td>
+                            <td class="small text-nowrap">@RoDate.FormatDate(u.CreatedAt)</td>
+                            <td class="small text-nowrap">
+                                @if (u.LastLoginAt.HasValue)
+                                {
+                                    <a asp-page="/Admin/Securitate" asp-route-q="@u.Email">@RoDate.FormatDateTime(u.LastLoginAt.Value)</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-end">@u.Listings</td>
+                            <td class="text-end">@u.Reservations</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3 small">
+            <span class="text-muted">@Model.Total utilizatori · pagina @Model.PageNumber din @Model.PageCount</span>
+            <span class="d-flex gap-2">
+                @if (Model.PageNumber > 1)
+                {
+                    <a class="btn btn-outline-success btn-sm" asp-page="/Admin/Utilizatori" asp-route-q="@Model.Search" asp-route-ordine="@Model.Sort" asp-route-pagina="@(Model.PageNumber - 1)">‹ Înapoi</a>
+                }
+                @if (Model.PageNumber < Model.PageCount)
+                {
+                    <a class="btn btn-outline-success btn-sm" asp-page="/Admin/Utilizatori" asp-route-q="@Model.Search" asp-route-ordine="@Model.Sort" asp-route-pagina="@(Model.PageNumber + 1)">Înainte ›</a>
+                }
+            </span>
+        </div>
+    </div>
+</div>

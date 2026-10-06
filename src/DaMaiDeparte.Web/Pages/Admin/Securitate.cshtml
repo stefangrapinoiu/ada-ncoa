@@ -1,0 +1,114 @@
+@page
+@model DaMaiDeparte.Web.Pages.Admin.SecuritateModel
+@{
+    ViewData["Title"] = "Siguranță – Panou admin";
+}
+
+<partial name="_AdminNav" />
+
+<h1 class="h3 mb-1">Siguranță</h1>
+<p class="text-muted mb-3">Jurnalul de securitate: autentificări, conturi noi, blocări. Orele sunt ale României.</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h6 mb-1"><i class="bi bi-exclamation-triangle-fill text-danger" aria-hidden="true"></i> IP-uri suspecte</h2>
+        <p class="small text-muted">@IndexModel.SuspiciousFailureThreshold+ autentificări eșuate de pe același IP în ultimele 24h</p>
+        @if (Model.SuspiciousIps.Count == 0)
+        {
+            <p class="mb-0 small"><i class="bi bi-check-circle text-success" aria-hidden="true"></i> Nimic suspect în ultimele 24h.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>IP</th><th>Încercări</th><th>Conturi încercate</th><th>Ultima</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in Model.SuspiciousIps)
+                        {
+                            <tr>
+                                <td class="font-monospace small">
+                                    <a asp-page="/Admin/Securitate" asp-route-q="@row.Ip">@row.Ip</a>
+                                </td>
+                                <td><span class="badge text-bg-danger">@row.Failures</span></td>
+                                <td class="small text-muted">@string.Join(", ", row.Emails)</td>
+                                <td class="small text-nowrap">@RoDate.FormatDateTime(row.LastAt)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h2 class="h6 mb-3">Jurnal</h2>
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label small mb-1" for="tip">Tip</label>
+                <select class="form-select form-select-sm" id="tip" name="tip">
+                    <option value="">Toate</option>
+                    @foreach (var type in Enum.GetValues<AuditEventType>())
+                    {
+                        <option value="@type" selected="@(Model.Type == type)">@AuditLabels.Label(type)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label small mb-1" for="q">E-mail sau IP</label>
+                <input class="form-control form-control-sm" id="q" name="q" value="@Model.Search" placeholder="ex: ioana@ sau 86.12." />
+            </div>
+            <div class="col-12 col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-success btn-sm flex-grow-1"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrează</button>
+                <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Securitate">Resetează</a>
+            </div>
+        </form>
+
+        @if (Model.Events.Count == 0)
+        {
+            <p class="text-muted mb-0">Niciun eveniment @(Model.Type.HasValue || !string.IsNullOrWhiteSpace(Model.Search) ? "pentru filtrele alese" : "încă — jurnalul se umple de la activarea panoului").</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Ora</th><th>Eveniment</th><th>Cine</th><th>IP · dispozitiv</th></tr></thead>
+                    <tbody>
+                        @foreach (var e in Model.Events)
+                        {
+                            <tr>
+                                <td class="small text-nowrap">@RoDate.FormatDateTime(e.OccurredAt)</td>
+                                <td>
+                                    <span class="badge @AuditLabels.Badge(e.Type)"><i class="bi @AuditLabels.Icon(e.Type)" aria-hidden="true"></i> @AuditLabels.Label(e.Type)</span>
+                                    @if (!string.IsNullOrEmpty(e.Details))
+                                    {
+                                        <div class="small text-muted">@e.Details</div>
+                                    }
+                                </td>
+                                <td class="small text-break">@(e.Email ?? "—")</td>
+                                <td class="small text-nowrap">
+                                    <span class="font-monospace">@(e.IpAddress ?? "—")</span>
+                                    <i class="bi @AuditLabels.Device(e.DeviceType)" title="@e.DeviceType" aria-label="@e.DeviceType"></i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 small">
+                <span class="text-muted">@Model.Total evenimente · pagina @Model.PageNumber din @Model.PageCount</span>
+                <span class="d-flex gap-2">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a class="btn btn-outline-success btn-sm" asp-page="/Admin/Securitate" asp-route-tip="@Model.Type" asp-route-q="@Model.Search" asp-route-pagina="@(Model.PageNumber - 1)">‹ Înapoi</a>
+                    }
+                    @if (Model.PageNumber < Model.PageCount)
+                    {
+                        <a class="btn btn-outline-success btn-sm" asp-page="/Admin/Securitate" asp-route-tip="@Model.Type" asp-route-q="@Model.Search" asp-route-pagina="@(Model.PageNumber + 1)">Înainte ›</a>
+                    }
+                </span>
+            </div>
+        }
+    </div>
+</div>

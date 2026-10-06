@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using DaMaiDeparte.Web.Infrastructure;
 using DaMaiDeparte.Web.Models;
+using DaMaiDeparte.Web.Monitoring;
 using DaMaiDeparte.Web.Resources;
 using DaMaiDeparte.Web.Services;
 using Microsoft.AspNetCore.Identity;
@@ -21,15 +22,18 @@ public class RegisterModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILocationService _locations;
+    private readonly IAuditLog _audit;
     private readonly ILogger<RegisterModel> _logger;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
         ILocationService locations,
+        IAuditLog audit,
         ILogger<RegisterModel> logger)
     {
         _userManager = userManager;
         _locations = locations;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -170,6 +174,7 @@ public class RegisterModel : PageModel
         }
 
         _logger.LogInformation("New account created ({UserId})", user.Id);
+        await _audit.WriteAsync(AuditEventType.Registered, user.Id, user.Email);
 
         // No automatic sign-in: the user confirms the account by logging in.
         // The location they chose is stored on the profile, so the first login lands on a feed
