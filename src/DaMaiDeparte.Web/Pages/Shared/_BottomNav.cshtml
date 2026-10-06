@@ -8,11 +8,9 @@
         <i class="bi @(IsActive("/Dashboard") ? "bi-house-door-fill" : "bi-house-door")" aria-hidden="true"></i>
         Acasă
     </a>
-    <div class="bottom-nav-fab-slot">
-        <a class="bottom-nav-fab" asp-page="/Donations/Create" aria-label="Adaugă un aliment">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        </a>
-    </div>
+    <a class="bottom-nav-fab" asp-page="/Donations/Create" aria-label="Adaugă un aliment">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    </a>
     <a class="bottom-nav-link @(IsActive("/Donations/Mine") ? "active" : "")" asp-page="/Donations/Mine"
        aria-current="@(IsActive("/Donations/Mine") ? "page" : null)">
         <i class="bi @(IsActive("/Donations/Mine") ? "bi-heart-fill" : "bi-heart")" aria-hidden="true"></i>

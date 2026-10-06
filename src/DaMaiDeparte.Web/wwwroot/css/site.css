@@ -16,20 +16,6 @@ body {
     color: var(--dmd-ink);
 }
 
-/* Let <main> absorb the leftover vertical space in the flex column so the footer (and the
-   bottom nav after it) land flush at the bottom on short pages instead of stacking right
-   under the content. */
-main {
-    flex: 1 0 auto;
-}
-
-/* The bottom nav is `position: fixed` and overlays the page, so give the content enough
-   bottom padding to clear it (including the safe-area inset the nav itself pads for) —
-   otherwise the last bit of content on every page sits hidden underneath the nav. */
-body.has-bottom-nav {
-    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
-}
-
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     font-family: var(--dmd-font);
     font-weight: 800;
@@ -348,44 +334,25 @@ button:focus-visible,
 
 /* ---- Mobile bottom tab bar (Acasă / Adaugă / Donații / Profil) ---- */
 .bottom-nav {
-    /* `position: fixed` is pinned to iOS Safari's "layout viewport", a logical viewport that
-       can drift out of sync with the actually-visible "visual viewport" while the browser's
-       own toolbars animate in/out during scroll — that's what made the bar float with a gap
-       underneath it until some interaction forced a resync. We tried `position: sticky`
-       instead (keeping it in normal document flow), but it didn't fully escape the same
-       layout/visual-viewport mismatch and cost the "floating app bar" overlay feel on top of
-       that. Back to `fixed`, and site.js actively compensates for the iOS quirk itself via
-       the visualViewport API (see the IIFE near the bottom of that file). */
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 1030;
     display: flex;
-    /* Bottom-anchor every item instead of centering the row: the FAB (56px) is taller than a
-       link's icon+label block (~42px), so centering left extra empty space underneath it
-       compared to the links. Flush bottoms mean the FAB's extra height only pokes upward,
-       which is the raised look we want, with nothing looking randomly offset. */
-    align-items: flex-end;
+    justify-content: space-around;
+    align-items: flex-start;
     padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, .98);
     border-top: 1px solid var(--dmd-border);
 }
 
-/* Four equal-width columns (the three links plus the FAB's slot) so the raised "+" button
-   always lands dead center between its neighbors, regardless of viewport width — fixed pixel
-   widths plus space-around drifted off-center depending on how much free space there was. */
-.bottom-nav .bottom-nav-link,
-.bottom-nav .bottom-nav-fab-slot {
-    flex: 1 1 0;
-    display: flex;
-    justify-content: center;
-}
-
 .bottom-nav .bottom-nav-link {
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 3px;
+    width: 72px;
     text-decoration: none;
     color: var(--dmd-ink-faint);
     font-size: 11px;
@@ -407,6 +374,7 @@ button:focus-visible,
     justify-content: center;
     width: 56px;
     height: 56px;
+    margin-top: -18px;
     border-radius: 999px;
     background: var(--dmd-green);
     color: #fff;
@@ -420,6 +388,10 @@ button:focus-visible,
 .bottom-nav .bottom-nav-fab:focus {
     color: #fff;
     background: var(--dmd-green-dark);
+}
+
+body.has-bottom-nav {
+    padding-bottom: 82px;
 }
 
 @media (min-width: 768px) {
