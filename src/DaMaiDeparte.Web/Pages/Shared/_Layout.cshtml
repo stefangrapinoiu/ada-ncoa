@@ -48,56 +48,83 @@
                         aria-controls="mainNav" aria-expanded="false" aria-label="Deschide meniul">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+                @{
+                    var navPage = ViewContext.RouteData.Values["page"] as string ?? "";
+                    string NavActive(string page) => string.Equals(navPage, page, StringComparison.OrdinalIgnoreCase) ? " active" : "";
+                    var accountInitial = (User.Identity?.Name ?? "?").Trim();
+                    accountInitial = accountInitial.Length > 0 ? accountInitial[..1].ToUpperInvariant() : "?";
+                }
                 <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-page="/Dashboard">Anunțuri</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donations/Create">Adaugă un aliment</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Donations/Mine">Donațiile mele</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Reservations/Index">Rezervările mele</a></li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @* Main sections: centered on desktop, one line each. On phones (inside ☰) the
+                           account items below are listed too, since there is no dropdown there. *@
+                        <ul class="navbar-nav mx-lg-auto main-nav">
+                            <li class="nav-item"><a class="nav-link@(NavActive("/Dashboard"))" asp-page="/Dashboard">Anunțuri</a></li>
+                            <li class="nav-item"><a class="nav-link@(NavActive("/Donations/Mine"))" asp-page="/Donations/Mine">Donațiile mele</a></li>
+                            <li class="nav-item"><a class="nav-link@(NavActive("/Reservations/Index"))" asp-page="/Reservations/Index">Rezervările mele</a></li>
+                            <li class="nav-item d-lg-none"><a class="nav-link" asp-page="/Donations/Create">Adaugă un aliment</a></li>
                             @if (User.IsInRole(AdminRole.Name))
                             {
-                                <li class="nav-item"><a class="nav-link" asp-page="/Admin/Index"><i class="bi bi-shield-lock" aria-hidden="true"></i> Panou admin</a></li>
+                                <li class="nav-item d-lg-none"><a class="nav-link" asp-page="/Admin/Index"><i class="bi bi-shield-lock" aria-hidden="true"></i> Panou admin</a></li>
                             }
-                        }
-                        else
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-page="/Index">Acasă</a></li>
-                        }
-                    </ul>
-                    <ul class="navbar-nav align-items-lg-center">
-                        <li class="nav-item">
-                            <button type="button" id="pwaInstallBtn" class="btn btn-outline-success btn-sm d-none ms-lg-2">
-                                <i class="bi bi-download" aria-hidden="true"></i> Instalează aplicația
-                            </button>
-                        </li>
-                        <li class="nav-item js-install-help">
-                            <a asp-page="/Ajutor/Instalare" class="btn btn-outline-success btn-sm ms-lg-2">
-                                <i class="bi bi-phone" aria-hidden="true"></i> Cum instalez aplicația?
-                            </a>
-                        </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index">
-                                    <i class="bi bi-person-circle" aria-hidden="true"></i> Contul meu
-                                </a>
-                            </li>
-                            <li class="nav-item">
+                            <li class="nav-item d-lg-none"><a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-circle" aria-hidden="true"></i> Contul meu</a></li>
+                            <li class="nav-item d-lg-none js-install-help"><a class="nav-link" asp-page="/Ajutor/Instalare"><i class="bi bi-phone" aria-hidden="true"></i> Cum instalez aplicația?</a></li>
+                            <li class="nav-item d-lg-none">
                                 <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline">
-                                    <button type="submit" class="nav-link btn btn-link">
-                                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Deconectare
-                                    </button>
+                                    <button type="submit" class="nav-link btn btn-link"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Deconectare</button>
                                 </form>
                             </li>
-                        }
-                        else
-                        {
+                        </ul>
+                        <ul class="navbar-nav align-items-lg-center gap-lg-2">
+                            <li class="nav-item">
+                                <button type="button" id="pwaInstallBtn" class="btn btn-outline-success btn-sm d-none">
+                                    <i class="bi bi-download" aria-hidden="true"></i> Instalează aplicația
+                                </button>
+                            </li>
+                            <li class="nav-item d-none d-lg-block">
+                                <a class="btn btn-success btn-sm rounded-pill px-3" asp-page="/Donations/Create">
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Adaugă
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown d-none d-lg-block">
+                                <button type="button" class="account-toggle dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Meniul contului">
+                                    <span class="account-avatar" aria-hidden="true">@accountInitial</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li><h6 class="dropdown-header text-truncate" style="max-width: 16rem;">@User.Identity?.Name</h6></li>
+                                    <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-circle me-2" aria-hidden="true"></i>Contul meu</a></li>
+                                    @if (User.IsInRole(AdminRole.Name))
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Admin/Index"><i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Panou admin</a></li>
+                                    }
+                                    <li class="js-install-help"><a class="dropdown-item" asp-page="/Ajutor/Instalare"><i class="bi bi-phone me-2" aria-hidden="true"></i>Cum instalez aplicația?</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="post" asp-area="Identity" asp-page="/Account/Logout">
+                                            <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Deconectare</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item"><a class="nav-link" asp-page="/Index">Acasă</a></li>
+                        </ul>
+                        <ul class="navbar-nav align-items-lg-center gap-lg-2">
+                            <li class="nav-item">
+                                <button type="button" id="pwaInstallBtn" class="btn btn-outline-success btn-sm d-none">
+                                    <i class="bi bi-download" aria-hidden="true"></i> Instalează aplicația
+                                </button>
+                            </li>
+                            <li class="nav-item js-install-help"><a class="nav-link" asp-page="/Ajutor/Instalare"><i class="bi bi-phone" aria-hidden="true"></i> Cum instalez aplicația?</a></li>
                             <li class="nav-item"><a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Autentificare</a></li>
-                            <li class="nav-item ms-lg-2"><a class="btn btn-success" asp-area="Identity" asp-page="/Account/Register">Creează cont</a></li>
-                        }
-                    </ul>
+                            <li class="nav-item"><a class="btn btn-success" asp-area="Identity" asp-page="/Account/Register">Creează cont</a></li>
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>
