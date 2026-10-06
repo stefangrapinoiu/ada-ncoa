@@ -139,7 +139,12 @@
             var step = stepEl(current);
             var invalid = step ? firstInvalid(step) : null;
             if (invalid) {
+                invalid.classList.add('is-invalid');
                 invalid.reportValidity();
+                invalid.addEventListener('change', function clearInvalid() {
+                    invalid.classList.remove('is-invalid');
+                    invalid.removeEventListener('change', clearInvalid);
+                });
                 return;
             }
             if (current < total) {

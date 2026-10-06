@@ -21,5 +21,5 @@ public sealed class EmailOptions
 
     public string FromAddress { get; set; } = "no-reply@ada-ncoa.ro";
 
-    public string FromName { get; set; } = "Ada-nCoa";
+    public string FromName { get; set; } = "Adă-nCoa";
 }

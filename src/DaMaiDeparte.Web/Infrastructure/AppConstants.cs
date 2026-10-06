@@ -3,8 +3,8 @@ namespace DaMaiDeparte.Web.Infrastructure;
 /// <summary>Application branding. Change the name here (and in wwwroot/manifest.webmanifest).</summary>
 public static class AppInfo
 {
-    public const string Name = "Ada-ncoa";
-    public const string ShortName = "Ada-ncoa";
+    public const string Name = "Adă-ncoa";
+    public const string ShortName = "Adă-ncoa";
     public const string Tagline = "Mai puțină risipă alimentară. Mai mult ajutor.";
     public const string CultureName = "ro-RO";
     public const string TimeZoneId = "Europe/Bucharest";

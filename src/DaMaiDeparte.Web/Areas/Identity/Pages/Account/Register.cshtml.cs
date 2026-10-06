@@ -84,6 +84,12 @@ public class RegisterModel : PageModel
 
         [Display(Name = "Localitatea")]
         public int? CityId { get; set; }
+
+        /// <summary>Required; checked manually in OnPostAsync (same pattern as CountryId/CountyId/
+        /// CityId above) rather than with a data-annotation, since "required bool" validation
+        /// attributes don't produce the message we want out of the box.</summary>
+        [Display(Name = "Sunt de acord cu prelucrarea datelor mele personale (GDPR)")]
+        public bool GdprConsent { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -114,6 +120,11 @@ public class RegisterModel : PageModel
             ModelState.AddModelError("Input.CityId", UiText.Validation.LocalityRequired);
         }
 
+        if (!Input.GdprConsent)
+        {
+            ModelState.AddModelError("Input.GdprConsent", UiText.Validation.GdprConsentRequired);
+        }
+
         BrowsingLocation? location = null;
         if (ModelState.IsValid)
         {
@@ -142,7 +153,8 @@ public class RegisterModel : PageModel
             PreferredCountryId = location.CountryId,
             PreferredCityId = location.CityId,
             PreferredNeighborhoodId = location.NeighborhoodId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            GdprConsentAt = DateTime.UtcNow
         };
 
         var result = await _userManager.CreateAsync(user, Input.Password);

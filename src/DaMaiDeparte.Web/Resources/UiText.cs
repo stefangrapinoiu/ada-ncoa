@@ -65,6 +65,8 @@ public static class UiText
 
         public const string MessageBodyRequired = "Scrie un mesaj înainte de a-l trimite.";
         public const string MessageBodyLength = "Mesajul nu poate depăși 1000 de caractere.";
+
+        public const string GdprConsentRequired = "Trebuie să fii de acord cu prelucrarea datelor tale personale pentru a-ți crea un cont.";
     }
 
     public static class Success

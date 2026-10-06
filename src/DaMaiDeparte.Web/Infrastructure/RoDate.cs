@@ -142,4 +142,17 @@ public static class RoDate
             _ => $"mai are {days} zile"
         };
     }
+
+    /// <summary>
+    /// Like <see cref="DescribeRemaining"/>, but swaps the bare day-count for the actual
+    /// expiry date once an item is further out than <see cref="FoodRules.MinimumShelfLifeDays"/> —
+    /// a count like "mai are 398 zile" is noise for shelf-stable goods; a date is useful.
+    /// </summary>
+    public static string DescribeRemainingOrDate(DateOnly expiration)
+    {
+        var days = expiration.DayNumber - Today.DayNumber;
+        return days > FoodRules.MinimumShelfLifeDays
+            ? $"Expiră {FormatDate(expiration)}"
+            : DescribeRemaining(expiration);
+    }
 }

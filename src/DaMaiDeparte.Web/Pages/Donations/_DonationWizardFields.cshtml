@@ -24,6 +24,7 @@
         <input asp-for="Input.Images" type="file" class="form-control" multiple required
                accept="image/jpeg,image/png,image/webp"
                data-image-input data-preview-container="imagePreviews" data-max-files="@FoodRules.MaxImages" />
+        <div class="invalid-feedback">Selectează cel puțin o fotografie.</div>
         <div class="form-text">
             Minimum o fotografie, maximum @FoodRules.MaxImages. Le poți selecta pe toate dintr-o singură dată.
             Asigură-te că produsul și data expirării sunt vizibile. JPG, PNG sau WebP, maximum 5 MB fiecare.

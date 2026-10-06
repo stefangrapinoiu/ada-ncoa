@@ -1,33 +1,5 @@
-:root {
-    /* Brand — from the "Ada-nCoa — PWA UI/UX" design canvas */
-    --dmd-green: #047857;
-    --dmd-green-dark: #036b4d;
-    --dmd-green-soft: #e8f7ef;
-    --dmd-accent: #f97316;
-    --dmd-ink: #111814;
-    --dmd-ink-soft: #4a5550;
-    --dmd-ink-faint: #5f6a64;
-    --dmd-border: #ecefed;
-    --dmd-surface-soft: #f1f3f2;
-    --dmd-bg: #f7f9f8;
-    --dmd-radius: 1.25rem;
-    --dmd-radius-sm: .875rem;
-    --dmd-font: 'Plus Jakarta Sans', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* Design tokens (colors, radii, fonts, Bootstrap var overrides) now live in tokens.css — loaded before this file in _Layout.cshtml. */
 
-    /* Bootstrap overrides so .btn-success / .text-success / .bg-success / badges follow the brand */
-    --bs-success: var(--dmd-green);
-    --bs-success-rgb: 4, 120, 87;
-    --bs-primary: var(--dmd-green);
-    --bs-primary-rgb: 4, 120, 87;
-    --bs-link-color: var(--dmd-green);
-    --bs-link-color-rgb: 4, 120, 87;
-    --bs-link-hover-color: var(--dmd-green-dark);
-    --bs-link-hover-color-rgb: 3, 107, 77;
-    --bs-body-font-family: var(--dmd-font);
-    --bs-border-radius: var(--dmd-radius-sm);
-    --bs-border-radius-lg: var(--dmd-radius);
-    --bs-border-radius-pill: 999px;
-}
 
 html {
     font-size: 16px;
@@ -368,19 +340,30 @@ button:focus-visible,
     bottom: 0;
     z-index: 1030;
     display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
+    /* Bottom-anchor every item instead of centering the row: the FAB (56px) is taller than a
+       link's icon+label block (~42px), so centering left extra empty space underneath it
+       compared to the links. Flush bottoms mean the FAB's extra height only pokes upward,
+       which is the raised look we want, with nothing looking randomly offset. */
+    align-items: flex-end;
     padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, .98);
     border-top: 1px solid var(--dmd-border);
 }
 
-.bottom-nav .bottom-nav-link {
+/* Four equal-width columns (the three links plus the FAB's slot) so the raised "+" button
+   always lands dead center between its neighbors, regardless of viewport width — fixed pixel
+   widths plus space-around drifted off-center depending on how much free space there was. */
+.bottom-nav .bottom-nav-link,
+.bottom-nav .bottom-nav-fab-slot {
+    flex: 1 1 0;
     display: flex;
+    justify-content: center;
+}
+
+.bottom-nav .bottom-nav-link {
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    width: 72px;
     text-decoration: none;
     color: var(--dmd-ink-faint);
     font-size: 11px;
@@ -402,7 +385,6 @@ button:focus-visible,
     justify-content: center;
     width: 56px;
     height: 56px;
-    margin-top: -18px;
     border-radius: 999px;
     background: var(--dmd-green);
     color: #fff;
@@ -420,6 +402,44 @@ button:focus-visible,
 
 body.has-bottom-nav {
     padding-bottom: 82px;
+}
+
+/* ---- App shell (phones, signed in) ----
+   iOS Safari moves `position: fixed` elements around while the page itself scrolls: its
+   layout viewport drifts against the visible area as the toolbars animate (measured on an
+   iPhone: offsets of 30-40px mid-scroll), so a fixed bottom bar jumps up and lets content show
+   underneath it. Every CSS/JS workaround on top of document scrolling still jumped.
+   Native-app structure instead: the page itself never scrolls. <body> is exactly one screen
+   tall, `.app-scroll` (header + main + footer) is the only scrolling area, and the bottom nav
+   is a plain flex item under it — nothing is `fixed`, so there is nothing for Safari to move. */
+.app-scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+}
+
+@media (max-width: 767.98px) {
+    body.has-bottom-nav {
+        height: 100vh;
+        height: 100dvh; /* dvh tracks Safari's toolbar, so the nav always sits on the visible bottom */
+        min-height: 0;
+        margin: 0;
+        overflow: hidden;
+        padding-bottom: 0;
+    }
+
+    body.has-bottom-nav .app-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+
+    body.has-bottom-nav .bottom-nav {
+        position: relative;
+        flex-shrink: 0;
+    }
 }
 
 @media (min-width: 768px) {
