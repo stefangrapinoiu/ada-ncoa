@@ -333,6 +333,25 @@
         });
     });
 
+    // ---- Keep the bottom nav pinned to the real visible screen on iOS ----
+    // `position: fixed` is pinned to the "layout viewport", which can drift out of sync with
+    // the actually-visible "visual viewport" on iOS Safari/Chrome while the browser's own
+    // toolbars animate in/out during scroll. We track the real visible area ourselves via the
+    // visualViewport API and nudge the nav up by the gap, so it stays glued to the bottom of
+    // whatever is actually on screen instead of the logical viewport iOS reports.
+    var bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav && window.visualViewport) {
+        var vv = window.visualViewport;
+        var repositionBottomNav = function () {
+            var gap = window.innerHeight - (vv.height + vv.offsetTop);
+            bottomNav.style.transform = gap > 0.5 ? 'translateY(-' + gap + 'px)' : '';
+        };
+        vv.addEventListener('resize', repositionBottomNav);
+        vv.addEventListener('scroll', repositionBottomNav);
+        window.addEventListener('orientationchange', repositionBottomNav);
+        repositionBottomNav();
+    }
+
     // ---- Service worker registration (PWA) ----
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {

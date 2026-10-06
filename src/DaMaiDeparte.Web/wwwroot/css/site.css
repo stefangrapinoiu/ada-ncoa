@@ -23,6 +23,13 @@ main {
     flex: 1 0 auto;
 }
 
+/* The bottom nav is `position: fixed` and overlays the page, so give the content enough
+   bottom padding to clear it (including the safe-area inset the nav itself pads for) —
+   otherwise the last bit of content on every page sits hidden underneath the nav. */
+body.has-bottom-nav {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+}
+
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     font-family: var(--dmd-font);
     font-weight: 800;
@@ -341,12 +348,17 @@ button:focus-visible,
 
 /* ---- Mobile bottom tab bar (Acasă / Adaugă / Donații / Profil) ---- */
 .bottom-nav {
-    /* See the comment above the `main` rule: `position: fixed` is pinned to iOS Safari's
-       layout viewport, which doesn't reliably track the real visible screen while the
-       browser's own toolbars are animating — that's what made the bar float with a gap
-       underneath it until an interaction forced a resync. `sticky` avoids that whole problem
-       by staying in normal document flow. */
-    position: sticky;
+    /* `position: fixed` is pinned to iOS Safari's "layout viewport", a logical viewport that
+       can drift out of sync with the actually-visible "visual viewport" while the browser's
+       own toolbars animate in/out during scroll — that's what made the bar float with a gap
+       underneath it until some interaction forced a resync. We tried `position: sticky`
+       instead (keeping it in normal document flow), but it didn't fully escape the same
+       layout/visual-viewport mismatch and cost the "floating app bar" overlay feel on top of
+       that. Back to `fixed`, and site.js actively compensates for the iOS quirk itself via
+       the visualViewport API (see the IIFE near the bottom of that file). */
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: 0;
     z-index: 1030;
     display: flex;
@@ -413,6 +425,10 @@ button:focus-visible,
 @media (min-width: 768px) {
     .bottom-nav {
         display: none;
+    }
+
+    body.has-bottom-nav {
+        padding-bottom: 0;
     }
 }
 
