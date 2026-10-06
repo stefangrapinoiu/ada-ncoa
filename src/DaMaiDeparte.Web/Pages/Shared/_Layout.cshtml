@@ -62,6 +62,11 @@
                                 <i class="bi bi-download" aria-hidden="true"></i> Instalează aplicația
                             </button>
                         </li>
+                        <li class="nav-item js-install-help">
+                            <a asp-page="/Ajutor/Instalare" class="btn btn-outline-success btn-sm ms-lg-2">
+                                <i class="bi bi-phone" aria-hidden="true"></i> Cum instalez aplicația?
+                            </a>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
