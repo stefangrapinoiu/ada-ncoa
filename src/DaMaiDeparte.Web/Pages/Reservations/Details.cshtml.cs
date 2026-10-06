@@ -18,12 +18,14 @@ public class DetailsModel : PageModel
 {
     private readonly IReservationService _reservations;
     private readonly IDonationService _donations;
+    private readonly INotificationService _notifications;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public DetailsModel(IReservationService reservations, IDonationService donations, UserManager<ApplicationUser> userManager)
+    public DetailsModel(IReservationService reservations, IDonationService donations, INotificationService notifications, UserManager<ApplicationUser> userManager)
     {
         _reservations = reservations;
         _donations = donations;
+        _notifications = notifications;
         _userManager = userManager;
     }
 
@@ -91,7 +93,11 @@ public class DetailsModel : PageModel
             Notes = Reservation.Notes ?? Reservation.DonationItem.PickupNotes
         };
 
-        Messages = await _reservations.GetMessagesAsync(Id, _userManager.GetUserId(User)!, cancellationToken);
+        var userId = _userManager.GetUserId(User)!;
+        Messages = await _reservations.GetMessagesAsync(Id, userId, cancellationToken);
+
+        // Opening the conversation clears its unread badge (bell + lists) for this user only.
+        await _notifications.MarkReadAsync(Id, userId, cancellationToken);
 
         return Page();
     }
@@ -228,7 +234,12 @@ public class DetailsModel : PageModel
             return NotFound();
         }
 
-        var messages = await _reservations.GetMessagesAsync(Id, _userManager.GetUserId(User)!, cancellationToken);
+        var userId = _userManager.GetUserId(User)!;
+        var messages = await _reservations.GetMessagesAsync(Id, userId, cancellationToken);
+
+        // The chat is open on screen, so whatever just arrived has been seen.
+        await _notifications.MarkReadAsync(Id, userId, cancellationToken);
+
         return new JsonResult(messages.Select(m => new
         {
             id = m.Id,

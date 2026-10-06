@@ -38,6 +38,12 @@
                     </span>
                     <span>Adă<span class="brand-hyphen">-</span>nCoa</span>
                 </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="order-lg-last ms-auto ms-lg-3 me-2 me-lg-0">
+                        @await Component.InvokeAsync("UnreadMessagesBell")
+                    </div>
+                }
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
                         aria-controls="mainNav" aria-expanded="false" aria-label="Deschide meniul">
                     <span class="navbar-toggler-icon"></span>

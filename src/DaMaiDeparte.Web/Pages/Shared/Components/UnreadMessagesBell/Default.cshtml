@@ -1,0 +1,8 @@
+@model int
+<a class="unread-bell position-relative d-inline-flex align-items-center justify-content-center"
+   asp-page="/Notificari/Index"
+   data-unread-count-url="@Url.Page("/Notificari/Index", "Count")"
+   aria-label="@(Model > 0 ? $"Mesaje noi: {Model}" : "Mesaje noi")">
+    <i class="bi @(Model > 0 ? "bi-bell-fill" : "bi-bell")" aria-hidden="true"></i>
+    <span class="unread-bell-badge badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle @(Model > 0 ? "" : "d-none")">@(Model > 99 ? "99+" : Model.ToString())</span>
+</a>

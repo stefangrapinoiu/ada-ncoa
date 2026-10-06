@@ -10,11 +10,13 @@ namespace DaMaiDeparte.Web.Pages.Reservations;
 public class IndexModel : PageModel
 {
     private readonly IReservationService _reservations;
+    private readonly INotificationService _notifications;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public IndexModel(IReservationService reservations, UserManager<ApplicationUser> userManager)
+    public IndexModel(IReservationService reservations, INotificationService notifications, UserManager<ApplicationUser> userManager)
     {
         _reservations = reservations;
+        _notifications = notifications;
         _userManager = userManager;
     }
 
@@ -26,6 +28,9 @@ public class IndexModel : PageModel
 
     public IReadOnlyList<MyReservationItem> Items { get; private set; } = Array.Empty<MyReservationItem>();
 
+    /// <summary>Unread message count per reservation id, for the "Mesaje noi" badges.</summary>
+    public IReadOnlyDictionary<int, int> UnreadByReservation { get; private set; } = new Dictionary<int, int>();
+
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         var userId = _userManager.GetUserId(User)!;
@@ -33,5 +38,6 @@ public class IndexModel : PageModel
         Items = ShowHistory
             ? await _reservations.GetReceivedHistoryAsync(userId, cancellationToken)
             : await _reservations.GetActiveReservationsAsync(userId, cancellationToken);
+        UnreadByReservation = await _notifications.GetUnreadCountsByReservationAsync(userId, cancellationToken);
     }
 }

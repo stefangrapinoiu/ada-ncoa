@@ -333,6 +333,40 @@
         });
     });
 
+    // ---- Unread messages bell: refresh the badge about once a minute ----
+    var bell = document.querySelector('.unread-bell');
+    if (bell && bell.dataset.unreadCountUrl && window.fetch) {
+        var bellBadge = bell.querySelector('.unread-bell-badge');
+        var bellIcon = bell.querySelector('i');
+        var refreshBell = function () {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+            fetch(bell.dataset.unreadCountUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+                .then(function (response) { return response.ok ? response.json() : null; })
+                .then(function (data) {
+                    if (!data || typeof data.count !== 'number') {
+                        return;
+                    }
+                    var count = data.count;
+                    bellBadge.textContent = count > 99 ? '99+' : String(count);
+                    bellBadge.classList.toggle('d-none', count === 0);
+                    bellIcon.classList.toggle('bi-bell-fill', count > 0);
+                    bellIcon.classList.toggle('bi-bell', count === 0);
+                    bell.setAttribute('aria-label', count > 0 ? 'Mesaje noi: ' + count : 'Mesaje noi');
+                })
+                .catch(function () {
+                    // Offline or server hiccup: keep the last known number.
+                });
+        };
+        window.setInterval(refreshBell, 60000);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') {
+                refreshBell();
+            }
+        });
+    }
+
     // ---- Service worker registration (PWA) ----
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {

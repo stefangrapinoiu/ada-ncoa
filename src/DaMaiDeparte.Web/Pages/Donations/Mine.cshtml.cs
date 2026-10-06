@@ -10,11 +10,13 @@ namespace DaMaiDeparte.Web.Pages.Donations;
 public class MineModel : PageModel
 {
     private readonly IDonationService _donations;
+    private readonly INotificationService _notifications;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public MineModel(IDonationService donations, UserManager<ApplicationUser> userManager)
+    public MineModel(IDonationService donations, INotificationService notifications, UserManager<ApplicationUser> userManager)
     {
         _donations = donations;
+        _notifications = notifications;
         _userManager = userManager;
     }
 
@@ -26,6 +28,9 @@ public class MineModel : PageModel
 
     public UserSummary Summary { get; private set; } = null!;
 
+    /// <summary>Unread message count per reservation id, for the "Mesaje noi" badges.</summary>
+    public IReadOnlyDictionary<int, int> UnreadByReservation { get; private set; } = new Dictionary<int, int>();
+
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         if (Status.HasValue && !Enum.IsDefined(Status.Value))
@@ -36,5 +41,6 @@ public class MineModel : PageModel
         var userId = _userManager.GetUserId(User)!;
         Summary = await _donations.GetSummaryAsync(userId, cancellationToken);
         Items = await _donations.GetMyDonationsAsync(userId, Status, cancellationToken);
+        UnreadByReservation = await _notifications.GetUnreadCountsByReservationAsync(userId, cancellationToken);
     }
 }

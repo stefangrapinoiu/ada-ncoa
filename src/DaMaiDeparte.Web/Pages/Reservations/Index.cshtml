@@ -32,6 +32,12 @@ else
                         <partial name="_DonationImage" model='new DonationImageModel(item.ImagePath, item.Title, "donation-thumb")' />
                         <div class="min-w-0">
                             <h2 class="h6 mb-1 text-truncate">@item.Title</h2>
+                            @if (Model.UnreadByReservation.TryGetValue(item.ReservationId, out var unread))
+                            {
+                                <a class="badge rounded-pill bg-danger text-decoration-none mb-1" href="@Url.Page("./Details", new { id = item.ReservationId })#mesaje">
+                                    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> @unread @(unread == 1 ? "mesaj nou" : "mesaje noi")
+                                </a>
+                            }
                             <div class="small text-muted mb-1">
                                 @item.CategoryName · @DisplayExtensions.ToLocationLabel(item.CityName, item.NeighborhoodName)
                             </div>

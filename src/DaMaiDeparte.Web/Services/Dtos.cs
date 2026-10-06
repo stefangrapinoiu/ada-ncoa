@@ -101,3 +101,12 @@ public sealed record ReservationMessageItem(
     bool IsMine,
     string Body,
     DateTime CreatedAt);
+
+/// <summary>A conversation with messages the viewer hasn't read yet, for the "Mesaje noi" page.</summary>
+public sealed record UnreadConversation(
+    int ReservationId,
+    string DonationTitle,
+    string LastSenderFirstName,
+    string LastMessageBody,
+    DateTime LastMessageAt,
+    int UnreadCount);

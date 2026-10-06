@@ -26,5 +26,14 @@ public class Reservation
     /// <summary>The in-app message thread with the other participant for this reservation.</summary>
     public ICollection<ReservationMessage> Messages { get; set; } = new List<ReservationMessage>();
 
+    /// <summary>
+    /// When the donor last opened this reservation's conversation. Messages from the receiver
+    /// newer than this are "unread" for the donor (bell badge, "Mesaje noi" list).
+    /// </summary>
+    public DateTime? DonorLastReadAt { get; set; }
+
+    /// <summary>When the receiver last opened this reservation's conversation (see DonorLastReadAt).</summary>
+    public DateTime? ReceiverLastReadAt { get; set; }
+
     public bool IsActive => CancelledAt == null;
 }
