@@ -844,3 +844,57 @@ textarea.form-control:focus {
 .unread-conversation:hover {
     border-color: var(--dmd-green);
 }
+
+
+/* ---- Top navbar (desktop): one line, centered sections, account menu ---- */
+.navbar .nav-link,
+.navbar .btn {
+    white-space: nowrap;
+}
+
+@media (min-width: 992px) {
+    .main-nav {
+        gap: .25rem;
+    }
+
+    .main-nav .nav-link {
+        padding: .45rem .9rem;
+        border-radius: 999px;
+        color: var(--dmd-ink-soft);
+        font-weight: 600;
+    }
+
+    .main-nav .nav-link:hover,
+    .main-nav .nav-link.active {
+        background: var(--dmd-green-soft);
+        color: var(--dmd-green-dark);
+    }
+}
+
+.account-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--dmd-ink-soft);
+}
+
+.account-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: var(--dmd-green-soft);
+    color: var(--dmd-green-dark);
+    font-weight: 800;
+}
+
+.account-toggle:focus-visible .account-avatar,
+.account-toggle:hover .account-avatar {
+    background: var(--dmd-green);
+    color: #fff;
+}
