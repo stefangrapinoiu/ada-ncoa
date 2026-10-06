@@ -85,6 +85,12 @@ else
                             <h2 class="h6 mb-1 text-truncate">
                                 <a class="text-decoration-none" asp-page="./Details" asp-route-id="@item.Id">@item.Title</a>
                             </h2>
+                            @if (item.ActiveReservationId is int reservationId && Model.UnreadByReservation.TryGetValue(reservationId, out var unread))
+                            {
+                                <a class="badge rounded-pill bg-danger text-decoration-none mb-1" href="@Url.Page("/Reservations/Details", new { id = reservationId })#mesaje">
+                                    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> @unread @(unread == 1 ? "mesaj nou" : "mesaje noi")
+                                </a>
+                            }
                             <div class="small text-muted">
                                 @item.CategoryName · @DisplayExtensions.ToLocationLabel(item.CityName, item.NeighborhoodName)
                             </div>

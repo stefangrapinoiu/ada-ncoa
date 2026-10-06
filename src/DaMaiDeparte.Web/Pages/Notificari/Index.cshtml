@@ -1,0 +1,50 @@
+@page
+@model DaMaiDeparte.Web.Pages.Notificari.IndexModel
+@{
+    ViewData["Title"] = "Mesaje noi";
+}
+
+<h1 class="h3 mb-1">Mesaje noi</h1>
+<p class="text-muted mb-4">Conversațiile în care ai mesaje necitite. Apasă pe una ca să deschizi chat-ul.</p>
+
+@if (Model.Conversations.Count == 0)
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-bell-slash fs-1 text-muted" aria-hidden="true"></i>
+            <p class="mt-3 mb-3">Nu ai mesaje noi.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a class="btn btn-outline-success btn-sm" asp-page="/Donations/Mine">Donațiile mele</a>
+                <a class="btn btn-outline-success btn-sm" asp-page="/Reservations/Index">Rezervările mele</a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+        @foreach (var conversation in Model.Conversations)
+        {
+            <li>
+                <a class="card text-decoration-none text-reset unread-conversation"
+                   href="@Url.Page("/Reservations/Details", new { id = conversation.ReservationId })#mesaje">
+                    <div class="card-body d-flex gap-3 align-items-start">
+                        <i class="bi bi-chat-dots-fill fs-4 text-success flex-shrink-0" aria-hidden="true"></i>
+                        <div class="min-w-0 flex-grow-1">
+                            <div class="d-flex justify-content-between gap-2">
+                                <h2 class="h6 mb-1 text-truncate">@conversation.DonationTitle</h2>
+                                <span class="badge rounded-pill bg-danger flex-shrink-0 align-self-start">
+                                    @conversation.UnreadCount @(conversation.UnreadCount == 1 ? "mesaj nou" : "mesaje noi")
+                                </span>
+                            </div>
+                            <div class="small text-truncate">
+                                <strong>@conversation.LastSenderFirstName:</strong> @conversation.LastMessageBody
+                            </div>
+                            <div class="small text-muted">@RoDate.FormatDateTime(conversation.LastMessageAt)</div>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        }
+    </ul>
+}

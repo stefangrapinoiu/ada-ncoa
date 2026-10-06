@@ -110,6 +110,7 @@ builder.Services
         options.Conventions.AuthorizePage("/Location");
         options.Conventions.AuthorizeFolder("/Donations");
         options.Conventions.AuthorizeFolder("/Reservations");
+        options.Conventions.AuthorizeFolder("/Notificari");
         options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
         options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
         options.Conventions.AuthorizePage("/Legal/AcceptareTermeni");
@@ -144,6 +145,7 @@ else
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IBrowsingLocationStore, SessionBrowsingLocationStore>();
 builder.Services.AddScoped<ILocationContext, LocationContext>();

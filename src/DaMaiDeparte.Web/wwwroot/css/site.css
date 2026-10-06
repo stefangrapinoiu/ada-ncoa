@@ -819,3 +819,28 @@ textarea.form-control:focus {
     color: var(--dmd-green-dark);
 }
 
+/* ---- Unread messages bell (top bar, signed-in users) ---- */
+.unread-bell {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    font-size: 1.35rem;
+    color: var(--dmd-ink);
+    text-decoration: none;
+}
+
+.unread-bell:hover,
+.unread-bell:focus-visible {
+    background: var(--dmd-green-soft);
+    color: var(--dmd-green-dark);
+}
+
+.unread-bell-badge {
+    font-size: .68rem;
+    margin-top: 8px;
+    margin-left: -8px;
+}
+
+.unread-conversation:hover {
+    border-color: var(--dmd-green);
+}
