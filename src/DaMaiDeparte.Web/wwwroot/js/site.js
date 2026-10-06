@@ -345,12 +345,23 @@
     // ---- "Install app" button (Chrome/Edge/Android/desktop) ----
     var deferredInstallPrompt = null;
     var installBtn = document.getElementById('pwaInstallBtn');
+    // "Cum instalez aplicația?" links (navbar + homepage). Hidden when they'd be redundant:
+    // already running as the installed app, the browser offers its own install button, or the
+    // app just got installed. On iPhone none of that happens, so the links stay visible there.
+    var installHelpLinks = document.querySelectorAll('.js-install-help');
+    var hideInstallHelp = function () {
+        installHelpLinks.forEach(function (el) { el.classList.add('d-none'); });
+    };
+    if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+        hideInstallHelp();
+    }
 
     window.addEventListener('beforeinstallprompt', function (event) {
         event.preventDefault();
         deferredInstallPrompt = event;
         if (installBtn) {
             installBtn.classList.remove('d-none');
+            hideInstallHelp();
         }
     });
 
@@ -368,6 +379,7 @@
     }
 
     window.addEventListener('appinstalled', function () {
+        hideInstallHelp();
         if (installBtn) {
             installBtn.classList.add('d-none');
         }
