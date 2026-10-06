@@ -16,6 +16,13 @@ body {
     color: var(--dmd-ink);
 }
 
+/* Let <main> absorb the leftover vertical space in the flex column so the footer (and the
+   bottom nav after it) land flush at the bottom on short pages instead of stacking right
+   under the content. */
+main {
+    flex: 1 0 auto;
+}
+
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     font-family: var(--dmd-font);
     font-weight: 800;
@@ -334,9 +341,12 @@ button:focus-visible,
 
 /* ---- Mobile bottom tab bar (Acasă / Adaugă / Donații / Profil) ---- */
 .bottom-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
+    /* See the comment above the `main` rule: `position: fixed` is pinned to iOS Safari's
+       layout viewport, which doesn't reliably track the real visible screen while the
+       browser's own toolbars are animating — that's what made the bar float with a gap
+       underneath it until an interaction forced a resync. `sticky` avoids that whole problem
+       by staying in normal document flow. */
+    position: sticky;
     bottom: 0;
     z-index: 1030;
     display: flex;
@@ -348,14 +358,6 @@ button:focus-visible,
     padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, .98);
     border-top: 1px solid var(--dmd-border);
-    /* iOS Safari repaints `position: fixed` elements a frame behind the page during momentum
-       scroll (it only snaps them back into place once scrolling settles), which reads as the
-       bar "floating" or drifting. Promoting it to its own compositor layer keeps it glued to
-       the viewport the whole time instead of being repainted on the main thread per frame. */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
 }
 
 /* Four equal-width columns (the three links plus the FAB's slot) so the raised "+" button
@@ -408,17 +410,9 @@ button:focus-visible,
     background: var(--dmd-green-dark);
 }
 
-body.has-bottom-nav {
-    padding-bottom: 82px;
-}
-
 @media (min-width: 768px) {
     .bottom-nav {
         display: none;
-    }
-
-    body.has-bottom-nav {
-        padding-bottom: 0;
     }
 }
 
